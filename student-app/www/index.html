@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0E4B3F" />
+  <title>الذخيرة المشرفة</title>
+
+  <!-- الخطوط العربية -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ═══════════════════════════ شاشة التحميل ═══════════════════════════ -->
+  <div id="splash-screen" class="screen active">
+    <div class="splash-inner">
+      <div class="splash-logo">
+        <div class="logo-badge">📖</div>
+      </div>
+      <h1 class="splash-title">الذخيرة المشرفة</h1>
+      <p class="splash-subtitle">تطبيق تعليمي للأطفال<br />حول الأعمال في العبادات اليومية</p>
+      <div class="splash-actions">
+        <button class="btn btn-primary" onclick="app.showAuth('signup')">ابدأ رحلتك</button>
+        <button class="btn btn-secondary" onclick="app.showAuth('login')">لدي حساب بالفعل</button>
+      </div>
+      <p class="splash-note">تأليف: الحبيب عمر بن محمد بن سالم بن حفيظ</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ التسجيل / الدخول ═══════════════════════════ -->
+  <div id="auth-screen" class="screen">
+    <div class="auth-header">
+      <button class="icon-btn back-btn" onclick="app.showSplash()">→</button>
+      <h2 id="auth-title">تسجيل جديد</h2>
+    </div>
+    <div class="auth-body">
+      <div class="form-group">
+        <label>الاسم الكامل</label>
+        <input type="text" id="auth-name" placeholder="اكتب اسمك" />
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="auth-email" placeholder="مثال: ahmed@example.com" />
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" id="auth-password" placeholder="اختر كلمة مرور قوية" />
+      </div>
+      <div class="form-group" id="age-group">
+        <label>العمر</label>
+        <input type="number" id="auth-age" min="8" max="15" placeholder="من ١٠ إلى ١٢" value="10" />
+      </div>
+      <button class="btn btn-primary btn-block" id="auth-submit" onclick="app.handleAuth()">إنشاء الحساب</button>
+      <p class="auth-toggle">
+        <span id="auth-toggle-text">لديك حساب بالفعل؟</span>
+        <a href="#" onclick="app.toggleAuthMode()" id="auth-toggle-link">تسجيل الدخول</a>
+      </p>
+      <div id="auth-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ الصفحة الرئيسية ═══════════════════════════ -->
+  <div id="home-screen" class="screen">
+    <header class="app-header">
+      <div class="user-greeting">
+        <div class="avatar" id="home-avatar">م</div>
+        <div>
+          <p class="greeting-label">أهلاً</p>
+          <h2 id="home-username">صديقنا</h2>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="app.showNotifications()">🔔</button>
+    </header>
+
+    <div class="stats-row">
+      <div class="stat-card streak">
+        <span class="stat-icon">🔥</span>
+        <div>
+          <p class="stat-value" id="stat-streak">0</p>
+          <p class="stat-label">أيام متتالية</p>
+        </div>
+      </div>
+      <div class="stat-card xp">
+        <span class="stat-icon">⭐</span>
+        <div>
+          <p class="stat-value" id="stat-xp">0</p>
+          <p class="stat-label">نقطة خبرة</p>
+        </div>
+      </div>
+      <div class="stat-card level">
+        <span class="stat-icon">🏆</span>
+        <div>
+          <p class="stat-value" id="stat-level">1</p>
+          <p class="stat-label">المستوى</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <h3>رحلة التعلم</h3>
+        <span id="progress-text">0 / 40</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="section-title">الفصول</div>
+    <div class="chapters-list" id="chapters-list"></div>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="app.showHome()">
+        <span class="nav-icon">🏠</span><span>الرئيسية</span>
+      </button>
+      <button class="nav-btn" onclick="app.showSearch()">
+        <span class="nav-icon">🔍</span><span>بحث</span>
+      </button>
+      <button class="nav-btn" onclick="app.showAssistant()">
+        <span class="nav-icon">🤖</span><span>حبيب</span>
+      </button>
+      <button class="nav-btn" onclick="app.showProfile()">
+        <span class="nav-icon">👤</span><span>ملفي</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة الفصل ═══════════════════════════ -->
+  <div id="chapter-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showHome()">→</button>
+      <h2 id="chapter-title">الفصل</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="lessons-list" id="lessons-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة الدرس ═══════════════════════════ -->
+  <div id="lesson-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.goBackFromLesson()">→</button>
+      <h2 id="lesson-title">الدرس</h2>
+      <button class="icon-btn" id="fav-btn" onclick="app.toggleFavorite()">🤍</button>
+    </header>
+
+    <div class="lesson-body">
+      <!-- ١. النص الأصلي -->
+      <div class="lesson-card original">
+        <div class="card-header">
+          <span class="card-icon">📖</span>
+          <h3>النص الأصلي من الكتاب</h3>
+          <button class="icon-btn small" onclick="app.speak(app.currentLesson.originalText)">🔊</button>
+        </div>
+        <p class="original-text" id="lesson-original"></p>
+      </div>
+
+      <!-- ٢. الشرح المبسط -->
+      <div class="lesson-card explanation">
+        <div class="card-header">
+          <span class="card-icon">💡</span>
+          <h3>الشرح المبسط</h3>
+        </div>
+        <p id="lesson-explanation"></p>
+      </div>
+
+      <!-- ٣. الكلمات الصعبة -->
+      <div class="lesson-card words">
+        <div class="card-header">
+          <span class="card-icon">📝</span>
+          <h3>الكلمات الصعبة</h3>
+        </div>
+        <div id="lesson-hardwords"></div>
+      </div>
+
+      <!-- ٤. مثال من الحياة -->
+      <div class="lesson-card example">
+        <div class="card-header">
+          <span class="card-icon">🌟</span>
+          <h3>مثال من حياتك</h3>
+        </div>
+        <p id="lesson-example"></p>
+      </div>
+
+      <!-- ٥. ماذا تعلمنا -->
+      <div class="lesson-card summary">
+        <div class="card-header">
+          <span class="card-icon">✅</span>
+          <h3>ماذا تعلمنا؟</h3>
+        </div>
+        <p id="lesson-summary"></p>
+      </div>
+
+      <!-- ٦. الفكرة الرئيسية -->
+      <div class="lesson-card main-idea">
+        <div class="card-header">
+          <span class="card-icon">💎</span>
+          <h3>الفكرة الرئيسية</h3>
+        </div>
+        <p id="lesson-mainidea"></p>
+      </div>
+
+      <!-- ٧. فكر قليلاً -->
+      <div class="lesson-card think">
+        <div class="card-header">
+          <span class="card-icon">🤔</span>
+          <h3>فكر قليلاً</h3>
+        </div>
+        <p id="lesson-think"></p>
+      </div>
+
+      <!-- ٨. احفظ -->
+      <div class="lesson-card memorize">
+        <div class="card-header">
+          <span class="card-icon">🎯</span>
+          <h3>احفظ هذا</h3>
+          <button class="icon-btn small" onclick="app.speak(app.currentLesson.memorize)">🔊</button>
+        </div>
+        <p class="memorize-text" id="lesson-memorize"></p>
+      </div>
+
+      <!-- ٩. زر الاختبار -->
+      <button class="btn btn-primary btn-block" onclick="app.startQuiz()">
+        ابدأ الاختبار 🎮
+      </button>
+      <button class="btn btn-secondary btn-block" onclick="app.markLessonComplete()">
+        أنهيت الدرس ✓
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة الاختبار ═══════════════════════════ -->
+  <div id="quiz-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.exitQuiz()">→</button>
+      <h2>الاختبار</h2>
+      <span id="quiz-counter">1/5</span>
+    </header>
+    <div class="quiz-body">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
+      <div class="quiz-question-card" id="quiz-question"></div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+      <button class="btn btn-primary btn-block" id="quiz-next-btn" onclick="app.nextQuizQuestion()" style="display:none">التالي</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ نتيجة الاختبار ═══════════════════════════ -->
+  <div id="quiz-result-screen" class="screen">
+    <div class="result-body">
+      <div class="result-icon" id="result-icon">🎉</div>
+      <h2 id="result-title">أحسنت!</h2>
+      <div class="result-score">
+        <p class="result-score-value" id="result-score">0/5</p>
+        <p class="result-score-percent" id="result-percent">0%</p>
+      </div>
+      <div class="result-rewards">
+        <div class="reward-item">
+          <span>⭐</span>
+          <p id="result-xp">+0 XP</p>
+        </div>
+        <div class="reward-item">
+          <span>💎</span>
+          <p id="result-gems">+0</p>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="app.showHome()">العودة للرئيسية</button>
+      <button class="btn btn-secondary btn-block" onclick="app.retryQuiz()">إعادة الاختبار</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة البحث ═══════════════════════════ -->
+  <div id="search-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showHome()">→</button>
+      <h2>بحث</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="search-body">
+      <input type="text" id="search-input" placeholder="ابحث في الدروس..." oninput="app.performSearch()" />
+      <div id="search-results"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ المساعد الذكي (حبيب) ═══════════════════════════ -->
+  <div id="assistant-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showHome()">→</button>
+      <div class="assistant-header">
+        <div class="assistant-avatar">🤖</div>
+        <div>
+          <h3>حبيب</h3>
+          <p class="assistant-status">مساعدك في تعلم الكتاب</p>
+        </div>
+      </div>
+      <div style="width:40px"></div>
+    </header>
+    <div class="chat-body" id="chat-body">
+      <div class="chat-msg assistant">
+        <p>السلام عليكم! أنا حبيب، مساعدك للإجابة عن أسئلتك حول الكتاب. اسألني عن أي درس أو كلمة صعبة!</p>
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chat-input" placeholder="اكتب سؤالك..." onkeypress="if(event.key==='Enter') app.sendChatMessage()" />
+      <button class="icon-btn primary" onclick="app.sendChatMessage()">↑</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ الملف الشخصي ═══════════════════════════ -->
+  <div id="profile-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showHome()">→</button>
+      <h2>ملفي الشخصي</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="profile-body">
+      <div class="profile-header">
+        <div class="avatar large" id="profile-avatar">م</div>
+        <h2 id="profile-name">اسم الطالب</h2>
+        <p id="profile-title">طالب مجتهد</p>
+      </div>
+      <div class="profile-stats">
+        <div class="pstat"><h3 id="p-lessons">0</h3><p>درساً أنجزت</p></div>
+        <div class="pstat"><h3 id="p-quizzes">0</h3><p>اختباراً</p></div>
+        <div class="pstat"><h3 id="p-badges">0</h3><p>وسام</p></div>
+      </div>
+      <div class="profile-actions">
+        <button class="profile-btn" onclick="app.showParent()"><span>👨‍👩‍👧</span> لوحة ولي الأمر</button>
+        <button class="profile-btn" onclick="app.showFavorites()"><span>⭐</span> المفضلة</button>
+        <button class="profile-btn" onclick="app.showAchievements()"><span>🏆</span> الإنجازات</button>
+        <button class="profile-btn" onclick="app.showCertificate()"><span>📜</span> الشهادة</button>
+        <button class="profile-btn" onclick="app.showSettings()"><span>⚙️</span> الإعدادات</button>
+        <button class="profile-btn danger" onclick="app.logout()"><span>🚪</span> تسجيل الخروج</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ لوحة ولي الأمر ═══════════════════════════ -->
+  <div id="parent-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showProfile()">→</button>
+      <h2>لوحة ولي الأمر</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="parent-body">
+      <div class="parent-card">
+        <h3>ملخص الأسبوع</h3>
+        <div class="parent-metrics">
+          <div><h4 id="parent-days">0</h4><p>أيام دراسة</p></div>
+          <div><h4 id="parent-minutes">0</h4><p>دقيقة</p></div>
+          <div><h4 id="parent-avg">0%</h4><p>متوسط الاختبارات</p></div>
+        </div>
+      </div>
+      <div class="parent-card">
+        <h3>الدروس المكتملة</h3>
+        <div id="parent-lessons-list"></div>
+      </div>
+      <div class="parent-card">
+        <h3>نقاط الضعف</h3>
+        <div id="parent-weakness"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة الإنجازات ═══════════════════════════ -->
+  <div id="achievements-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showProfile()">→</button>
+      <h2>إنجازاتي</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="achievements-body" id="achievements-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة المفضلة ═══════════════════════════ -->
+  <div id="favorites-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showProfile()">→</button>
+      <h2>المفضلة</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="favorites-body" id="favorites-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════ صفحة الشهادة ═══════════════════════════ -->
+  <div id="certificate-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showProfile()">→</button>
+      <h2>الشهادة</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="certificate-body" id="certificate-body"></div>
+  </div>
+
+  <!-- ═══════════════════════════ الإعدادات ═══════════════════════════ -->
+  <div id="settings-screen" class="screen">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="app.showProfile()">→</button>
+      <h2>الإعدادات</h2>
+      <div style="width:40px"></div>
+    </header>
+    <div class="settings-body">
+      <div class="setting-item">
+        <label>الوضع الليلي</label>
+        <input type="checkbox" id="dark-mode-toggle" onchange="app.toggleDarkMode()" />
+      </div>
+      <div class="setting-item">
+        <label>الإشعارات</label>
+        <input type="checkbox" id="notif-toggle" checked />
+      </div>
+      <div class="setting-item">
+        <label>سرعة الصوت</label>
+        <select id="speech-rate">
+          <option value="0.7">بطيء</option>
+          <option value="0.9" selected>متوسط</option>
+          <option value="1.1">سريع</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading-overlay" style="display:none">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/gamification.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/assistant.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

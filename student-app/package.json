@@ -1,0 +1,21 @@
+{
+  "name": "athakhira-student-app",
+  "version": "1.0.0",
+  "description": "تطبيق الذخيرة المشرفة التعليمي للأطفال",
+  "main": "index.js",
+  "scripts": {
+    "sync": "npx cap sync android",
+    "add-android": "npx cap add android",
+    "open-android": "npx cap open android",
+    "serve": "npx http-server www -p 8080"
+  },
+  "keywords": ["islamic", "education", "kids", "arabic"],
+  "author": "hsn.pmt",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/cli": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/splash-screen": "^6.0.0"
+  }
+}

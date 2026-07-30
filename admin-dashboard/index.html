@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة تحكم - الذخيرة المشرفة</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- ═══════════════════ شاشة الدخول ═══════════════════ -->
+  <div id="login-view" class="view active">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="logo-icon">📖</div>
+        <h1>الذخيرة المشرفة</h1>
+        <p>لوحة تحكم المشرف</p>
+      </div>
+      <div class="form-group">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="admin-email" placeholder="admin@example.com" />
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input type="password" id="admin-password" placeholder="********" />
+      </div>
+      <button class="btn primary block" onclick="admin.login()">دخول</button>
+      <div id="login-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ اللوحة الرئيسية ═══════════════════ -->
+  <div id="dashboard-view" class="view">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon-small">📖</div>
+        <div>
+          <h2>الذخيرة المشرفة</h2>
+          <p>لوحة الإدارة</p>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="admin.showPage('overview')">
+          <span>📊</span> نظرة عامة
+        </button>
+        <button class="nav-item" onclick="admin.showPage('users')">
+          <span>👥</span> الطلاب
+        </button>
+        <button class="nav-item" onclick="admin.showPage('lessons')">
+          <span>📚</span> الدروس
+        </button>
+        <button class="nav-item" onclick="admin.showPage('quiz-stats')">
+          <span>📝</span> الاختبارات
+        </button>
+        <button class="nav-item" onclick="admin.showPage('notifications')">
+          <span>🔔</span> الإشعارات
+        </button>
+        <button class="nav-item" onclick="admin.showPage('reports')">
+          <span>📄</span> التقارير
+        </button>
+        <button class="nav-item" onclick="admin.showPage('settings')">
+          <span>⚙️</span> الإعدادات
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="admin.logout()">🚪 تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <h1 id="page-title">نظرة عامة</h1>
+        <div class="header-user">
+          <span id="admin-name">المشرف</span>
+          <div class="user-avatar">م</div>
+        </div>
+      </header>
+
+      <!-- ═══════════════════ نظرة عامة ═══════════════════ -->
+      <div id="page-overview" class="page active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#DBEAFE;color:#1E40AF">👥</div>
+            <div>
+              <p class="kpi-label">إجمالي الطلاب</p>
+              <p class="kpi-value" id="kpi-users">-</p>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#DCFCE7;color:#166534">📖</div>
+            <div>
+              <p class="kpi-label">دروس مكتملة</p>
+              <p class="kpi-value" id="kpi-lessons">-</p>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#FEF3C7;color:#92400E">📝</div>
+            <div>
+              <p class="kpi-label">اختبارات مؤداة</p>
+              <p class="kpi-value" id="kpi-quizzes">-</p>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#EDE9FE;color:#5B21B6">🎯</div>
+            <div>
+              <p class="kpi-label">متوسط الدرجات</p>
+              <p class="kpi-value" id="kpi-avg">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3>الإكمال حسب الفصل</h3>
+            <canvas id="chart-chapters"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>نشاط الأسبوع</h3>
+            <canvas id="chart-activity"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ الطلاب ═══════════════════ -->
+      <div id="page-users" class="page">
+        <div class="page-actions">
+          <input type="text" placeholder="ابحث عن طالب..." id="user-search" oninput="admin.filterUsers()" />
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>العمر</th>
+                <th>المستوى</th>
+                <th>XP</th>
+                <th>سلسلة الأيام</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="7" class="loading-row">جارٍ التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ الدروس ═══════════════════ -->
+      <div id="page-lessons" class="page">
+        <div id="lessons-content"></div>
+      </div>
+
+      <!-- ═══════════════════ الاختبارات ═══════════════════ -->
+      <div id="page-quiz-stats" class="page">
+        <div class="table-card">
+          <h3 style="padding:20px;border-bottom:1px solid var(--border)">آخر نتائج الاختبارات</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>الطالب</th>
+                <th>الدرس</th>
+                <th>النتيجة</th>
+                <th>النسبة</th>
+                <th>التاريخ</th>
+              </tr>
+            </thead>
+            <tbody id="quiz-tbody">
+              <tr><td colspan="5" class="loading-row">جارٍ التحميل...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ الإشعارات ═══════════════════ -->
+      <div id="page-notifications" class="page">
+        <div class="form-card">
+          <h3>إرسال إشعار جديد</h3>
+          <div class="form-group">
+            <label>العنوان</label>
+            <input type="text" id="notif-title" placeholder="عنوان الإشعار" />
+          </div>
+          <div class="form-group">
+            <label>المحتوى</label>
+            <textarea id="notif-body" rows="4" placeholder="نص الإشعار..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>المستهدف</label>
+            <select id="notif-target">
+              <option value="all">جميع الطلاب</option>
+              <option value="student">الطلاب فقط</option>
+              <option value="parent">أولياء الأمور</option>
+            </select>
+          </div>
+          <button class="btn primary" onclick="admin.sendNotification()">إرسال الإشعار</button>
+        </div>
+        <div class="table-card">
+          <h3 style="padding:20px;border-bottom:1px solid var(--border)">الإشعارات المرسلة</h3>
+          <div id="notif-history"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ التقارير ═══════════════════ -->
+      <div id="page-reports" class="page">
+        <div class="reports-grid">
+          <div class="report-card" onclick="admin.exportReport('users')">
+            <div class="report-icon">👥</div>
+            <h3>تقرير الطلاب</h3>
+            <p>قائمة كاملة بالطلاب وتقدمهم</p>
+            <button class="btn primary small">تحميل CSV</button>
+          </div>
+          <div class="report-card" onclick="admin.exportReport('quizzes')">
+            <div class="report-icon">📝</div>
+            <h3>تقرير الاختبارات</h3>
+            <p>نتائج جميع الاختبارات</p>
+            <button class="btn primary small">تحميل CSV</button>
+          </div>
+          <div class="report-card" onclick="admin.exportReport('progress')">
+            <div class="report-icon">📈</div>
+            <h3>تقرير التقدم</h3>
+            <p>تفاصيل تقدم كل طالب</p>
+            <button class="btn primary small">تحميل CSV</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ الإعدادات ═══════════════════ -->
+      <div id="page-settings" class="page">
+        <div class="form-card">
+          <h3>إعدادات الاتصال بـ Supabase</h3>
+          <div class="form-group">
+            <label>Supabase URL</label>
+            <input type="text" id="settings-url" placeholder="https://xxx.supabase.co" />
+          </div>
+          <div class="form-group">
+            <label>Anon Key</label>
+            <input type="text" id="settings-key" placeholder="eyJhbGc..." />
+          </div>
+          <button class="btn primary" onclick="admin.saveSettings()">حفظ الإعدادات</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
