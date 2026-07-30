@@ -530,8 +530,34 @@ const app = {
   },
 
   // ═══════════════════════════ الإشعارات ═══════════════════════════
-  showNotifications() {
-    gamification.showToast('لا توجد إشعارات جديدة');
+async showNotifications() {
+    if (!db.client) {
+      gamification.showToast('لا يوجد اتصال بالإنترنت');
+      return;
+    }
+    try {
+      const { data, error } = await db.client
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        gamification.showToast('لا توجد إشعارات جديدة');
+        return;
+      }
+      
+      const notifText = data.map((n, i) => 
+        `${i + 1}. ${n.title}\n${n.body || ''}\n(${new Date(n.created_at).toLocaleDateString('ar-SA')})`
+      ).join('\n\n───────\n\n');
+      
+      alert(`🔔 الإشعارات (${data.length})\n\n${notifText}`);
+    } catch (err) {
+      gamification.showToast('خطأ في تحميل الإشعارات');
+      console.error(err);
+    }
   },
 
   // ═══════════════════════════ الصوت (TTS) ═══════════════════════════
