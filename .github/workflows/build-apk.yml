@@ -61,3 +61,14 @@ jobs:
           name: athakhira-apk
           path: output/*.apk
           retention-days: 30
+          - name: Add Android platform
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Generate app icons
+        run: npx @capacitor/assets generate --android || echo "icon generation skipped"
+
+      - name: Sync Capacitor
+        run: npx cap sync android
