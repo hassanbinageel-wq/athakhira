@@ -36,6 +36,18 @@ jobs:
             npx cap add android
           fi
 
+      - name: Inject microphone permission
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            if ! grep -q "android.permission.RECORD_AUDIO" "$MANIFEST"; then
+              sed -i 's|<application|<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <application|' "$MANIFEST"
+              echo "✓ Added RECORD_AUDIO permission"
+            fi
+            echo "===== Manifest permissions ====="
+            grep "uses-permission" "$MANIFEST"
+          fi
+
       - name: Generate app icons
         run: npx @capacitor/assets generate --android || echo "icon generation skipped"
 
