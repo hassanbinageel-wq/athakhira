@@ -1,0 +1,11 @@
+{
+  "appId": "com.hsnpmt.athakhira",
+  "appName": "الذخيرة المشرفة",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
