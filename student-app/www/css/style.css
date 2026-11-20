@@ -2622,3 +2622,13 @@ img { display: block; max-width: 100%; }
 }
 .mt-spot-badge.lock { background: #fff8e1; border-color: #d18f00; }
 .mountain-scene-img .mt-walker { z-index: 6; }
+
+/* ═══════════ فيديو نهاية الدرس ═══════════ */
+.section-video { border-inline-start-color: var(--gold-500, #d18f00); }
+.lesson-video {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  border-radius: 12px;
+  background: #000;
+}

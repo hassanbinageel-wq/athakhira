@@ -749,6 +749,21 @@ const App = (function() {
     return html;
   }
 
+  // فيديو نهاية الدرس: assets/video/<الفصل>-<الدرس>.mp4
+  // إن لم يوجد الملف يُحذف القسم تلقائياً (فلا يلزم تسجيل الفيديوهات في أي قائمة)
+  function renderLessonVideo(chapterId, lessonId) {
+    return `
+      <div class="lesson-section section-video">
+        <div class="section-title">🎬 شاهد الدرس</div>
+        <div class="section-body">
+          <video class="lesson-video" controls playsinline preload="metadata"
+                 controlsList="nodownload"
+                 src="assets/video/${chapterId}-${lessonId}.mp4"
+                 onerror="this.closest('.section-video')?.remove()"></video>
+        </div>
+      </div>`;
+  }
+
   function openLesson(chapterId, lessonId) {
     const ch = CHAPTERS.find(c => c.id === chapterId);
     const lesson = ch?.lessons.find(l => l.id === lessonId);
@@ -807,6 +822,8 @@ const App = (function() {
 
         <div class="lesson-body">
           ${renderLessonSections(lesson)}
+
+          ${renderLessonVideo(chapterId, lessonId)}
 
           ${thinkHTML}
 
