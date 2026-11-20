@@ -204,103 +204,60 @@ const App = (function() {
       return d === ch.lessons.length;
     });
 
-    // القبّة الخضراء للمسجد النبوي (SVG مرسوم)
-    const GREEN_DOME = `<svg class="mt-icon-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="domeG" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#3d9970"/>
-            <stop offset="55%" stop-color="#1e7a52"/>
-            <stop offset="100%" stop-color="#12563a"/>
-          </linearGradient>
-        </defs>
-        <rect x="6" y="26" width="28" height="12" fill="#f0e6d2" stroke="#c9b896" stroke-width="1"/>
-        <rect x="9" y="30" width="5" height="8" rx="2.5" fill="#1e7a52" opacity=".7"/>
-        <rect x="17.5" y="30" width="5" height="8" rx="2.5" fill="#1e7a52" opacity=".7"/>
-        <rect x="26" y="30" width="5" height="8" rx="2.5" fill="#1e7a52" opacity=".7"/>
-        <path d="M8,26 C8,14 32,14 32,26 Z" fill="url(#domeG)" stroke="#0d4530" stroke-width="1"/>
-        <ellipse cx="16" cy="20" rx="4" ry="5" fill="#ffffff" opacity=".18"/>
-        <rect x="19.2" y="7" width="1.6" height="7" fill="#d4a017"/>
-        <circle cx="20" cy="6" r="2.2" fill="#e8c04a" stroke="#b8860b" stroke-width=".6"/>
-        <path d="M18.6,4.2 A2.6,2.6 0 1,0 21.4,4.2 A2,2 0 1,1 18.6,4.2" fill="#e8c04a"/>
-      </svg>`;
-
-    // مواقع اللافتات: تناوب منتظم يمين/يسار مع مسافات متساوية
-    const layout = [
-      { top: 92.5, left: 50, side: 'gate',  icons: ['🕌','📖','❤️'] },        // ١ البوّابة
-      { top: 82,   left: 75, side: 'right', icons: ['💧','🚿'] },              // ٢ يمين
-      { top: 71.5, left: 25, side: 'left',  icons: ['🕌','🕋'] },              // ٣ يسار
-      { top: 61,   left: 75, side: 'right', icons: ['🤲'] },                   // ٤ يمين
-      { top: 50.5, left: 25, side: 'left',  icons: ['🍽️','🏠','🌙'] },         // ٥ يسار
-      { top: 40,   left: 75, side: 'right', icons: [GREEN_DOME, '📜'] },       // ٦ يمين
-      { top: 29.5, left: 25, side: 'left',  icons: ['🪦'] },                   // ٧ يسار
-      { top: 22,   left: 75, side: 'right', icons: ['☀️','🌙','📿'] }          // ٨ يمين (نُزّل قليلاً ليبتعد عن بانر الكأس)
-    ];
+    // ═══ الخريطة صورة جاهزة (assets/map/mountain.webp — 1116×2000) ═══
+    // اللافتات والأيقونات والنصوص مرسومة في الصورة نفسها،
+    // وهنا فقط مناطق ضغط شفّافة فوقها + حالة القفل/الإكمال + الشخصيّة.
+    // الإحداثيات بالبكسل في الصورة الأصليّة: [x1, y1, x2, y2]
+    const MAP_W = 1116, MAP_H = 2000;
+    const hotspots = {
+      1: [45, 1575, 735, 2000],   // البوّابة
+      2: [740, 1340, 1065, 1545],
+      3: [765, 1050, 1075, 1295],
+      4: [130, 1160, 430, 1370],
+      5: [60, 760, 390, 1020],
+      6: [725, 540, 1015, 820],
+      7: [150, 430, 415, 630],
+      8: [680, 255, 975, 445]
+    };
+    const TROPHY_BOX = [415, 60, 700, 320];
+    const boxStyle = ([x1, y1, x2, y2]) =>
+      `left:${(x1 / MAP_W * 100).toFixed(2)}%; top:${(y1 / MAP_H * 100).toFixed(2)}%;` +
+      ` width:${((x2 - x1) / MAP_W * 100).toFixed(2)}%; height:${((y2 - y1) / MAP_H * 100).toFixed(2)}%;`;
 
     let signsHTML = '';
-    CHAPTERS.forEach((ch, idx) => {
-      const pos = layout[idx] || layout[layout.length - 1];
+    CHAPTERS.forEach((ch) => {
+      const box = hotspots[ch.id];
+      if (!box) return;
       const unlocked = Gamification.isChapterUnlocked(ch.id);
-      const stars = Gamification.state.starsByChapter[ch.id] || 0;
       const isCurrent = ch.id === currentChapterId;
       const doneCount = Gamification.state.completedLessons.filter(l => l.chapterId === ch.id).length;
       const isDone = doneCount >= ch.lessons.length && ch.lessons.length > 0;
       const action = unlocked ? `App.openChapter(${ch.id})` : `App.showLockedMsg(${ch.id})`;
-
-      const iconsHTML = `<div class="mt-icons">${pos.icons.map(i =>
-        `<span class="mt-icon">${i}</span>`).join('')}</div>`;
-
-      if (pos.side === 'gate') {
-        // البوّابة القوسيّة للفصل الأول
-        signsHTML += `
-          <div class="mt-gate ${unlocked ? 'unlocked' : 'locked'} ${isCurrent && unlocked ? 'current' : ''} ${isDone ? 'done' : ''}"
-               style="top:${pos.top}%; left:50%;" onclick="${action}">
-            ${isDone ? '<div class="mt-badge">✓</div>' : ''}
-            <div class="gate-arch">
-              <div class="gate-icons">
-                <span>🕌</span>
-                <span class="gate-title-wrap">
-                  <span class="gate-num">الفصل ${toArabicOrdinal(ch.id)}:</span>
-                  <span class="gate-text">${ch.title}</span>
-                </span>
-                <span>📖</span>
-              </div>
-            </div>
-            <div class="gate-pillars"><div class="pillar"></div><div class="pillar"></div></div>
-          </div>`;
-      } else {
-        signsHTML += `
-          <div class="mt-sign mt-sign-${pos.side} ${unlocked ? 'unlocked' : 'locked'} ${isCurrent && unlocked ? 'current' : ''} ${isDone ? 'done' : ''}"
-               style="top:${pos.top}%; left:${pos.left}%; --sign-color:${ch.signColor || ch.color};"
-               onclick="${action}">
-            ${isDone ? '<div class="mt-badge">✓</div>' : ''}
-            ${iconsHTML}
-            <div class="mt-sign-body">
-              <div class="mt-sign-num">الفصل ${toArabicOrdinal(ch.id)}:</div>
-              <div class="mt-sign-title">${ch.shortTitle || ch.title}</div>
-              ${unlocked
-                ? `<div class="mt-sign-stars">⭐ ${stars}/${CONFIG.STARS_TO_UNLOCK_CHAPTER}</div>`
-                : `<div class="mt-sign-locked">🔒</div>`}
-            </div>
-            <div class="mt-sign-pole"></div>
-          </div>`;
-      }
+      signsHTML += `
+        <button type="button"
+          class="mt-spot ${unlocked ? 'unlocked' : 'locked'} ${isCurrent && unlocked ? 'current' : ''} ${isDone ? 'done' : ''}"
+          style="${boxStyle(box)}" onclick="${action}"
+          aria-label="الفصل ${toArabicOrdinal(ch.id)}: ${ch.title}">
+          ${isDone ? '<span class="mt-spot-badge">✓</span>' : ''}
+          ${!unlocked ? '<span class="mt-spot-badge lock">🔒</span>' : ''}
+        </button>`;
     });
 
-    // ═══ مواضع الشخصيّة على المسار — نقطة مخصّصة لكل فصل تتبع منحنى الطريق ═══
+    // ═══ مواضع الشخصيّة على المسار المرسوم (بكسل في الصورة: [x, y]) ═══
     const walkerByChapter = {
-      1: { top: 92,   left: 18 },   // يسار البوّابة على العشب (لا تُغطّي النصّ)
-      2: { top: 83,   left: 63 },   // منحنى المسار عند الفصل ٢ (يمين)
-      3: { top: 72,   left: 48 },   // المسار يعود للوسط عند الفصل ٣ (يسار)
-      4: { top: 61,   left: 58 },   // منحنى يميني قرب الفصل ٤
-      5: { top: 51,   left: 49 },   // المسار قرب الوسط عند الفصل ٥ (يسار)
-      6: { top: 41,   left: 45 },   // منحنى يساري خفيف قرب الفصل ٦
-      7: { top: 30,   left: 58 },   // منحنى يميني قرب الفصل ٧
-      8: { top: 23,   left: 50 }    // قرب القمّة، مركز
+      1: [510, 1440],   // على المسار بين البوّابة والنافورة (لا تغطّي نصّ البوّابة)
+      2: [640, 1250],
+      3: [560, 1150],
+      4: [540, 1100],
+      5: [560, 960],
+      6: [590, 780],
+      7: [540, 640],
+      8: [540, 450]     // تحت الكأس ولا تغطّي لافتة الفصل الثامن
     };
-    const walkerPos = walkerByChapter[currentChapterId] || walkerByChapter[1];
+    const [wx, wy] = walkerByChapter[currentChapterId] || walkerByChapter[1];
 
     const characterHTML = `
-      <div class="mt-walker" style="top:${walkerPos.top}%; left:${walkerPos.left}%;">
+      <div class="mt-walker" style="top:${(wy / MAP_H * 100).toFixed(2)}%; left:${(wx / MAP_W * 100).toFixed(2)}%;">
         <div class="mt-walker-glow"></div>
         <img class="mt-walker-img" src="${Character.imgPath}" alt="أنت هنا"/>
         <div class="mt-walker-label">أنت هنا</div>
@@ -366,55 +323,14 @@ const App = (function() {
     }
     const motivation = buildMotivation();
 
-    // الكأس الذهبي المرسوم (SVG) — دائماً ذهبي مشعّ
+    // الكأس مرسوم في الصورة؛ هنا منطقة الضغط فقط
     const trophyHTML = `
-      <div class="mt-trophy ${allDone ? 'unlocked' : 'locked'}"
-           onclick="${allDone ? 'App.startFinalExam()' : ''}">
-        <svg class="trophy-svg" viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="cupGold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%"   stop-color="#fff3b0"/>
-              <stop offset="25%"  stop-color="#ffd93d"/>
-              <stop offset="55%"  stop-color="#f5b700"/>
-              <stop offset="100%" stop-color="#d18f00"/>
-            </linearGradient>
-            <linearGradient id="baseGold" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stop-color="#ffd93d"/>
-              <stop offset="100%" stop-color="#c98a00"/>
-            </linearGradient>
-            <radialGradient id="cupShine" cx="0.32" cy="0.25" r="0.5">
-              <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.85"/>
-              <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-            </radialGradient>
-            <filter id="goldBlur" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="5"/>
-            </filter>
-          </defs>
-          <!-- هالة ذهبيّة -->
-          <ellipse class="trophy-halo" cx="50" cy="42" rx="42" ry="42"
-                   fill="#ffd93d" opacity="0.45" filter="url(#goldBlur)"/>
-          <!-- المقابض -->
-          <path d="M22,22 C6,22 6,48 24,52" fill="none" stroke="url(#cupGold)"
-                stroke-width="7" stroke-linecap="round"/>
-          <path d="M78,22 C94,22 94,48 76,52" fill="none" stroke="url(#cupGold)"
-                stroke-width="7" stroke-linecap="round"/>
-          <!-- الكأس -->
-          <path d="M22,16 L78,16 L74,50 C72,64 60,72 50,72 C40,72 28,64 26,50 Z"
-                fill="url(#cupGold)" stroke="#b87d00" stroke-width="2.5"/>
-          <path d="M22,16 L78,16 L74,50 C72,64 60,72 50,72 C40,72 28,64 26,50 Z"
-                fill="url(#cupShine)"/>
-          <!-- النجمة -->
-          <path d="M50,28 L54.2,37.2 L64,38.4 L56.8,45.2 L58.7,55 L50,50.2 L41.3,55 L43.2,45.2 L36,38.4 L45.8,37.2 Z"
-                fill="#ffb300" stroke="#a86e00" stroke-width="1.2"/>
-          <!-- الساق والقاعدة -->
-          <rect x="44" y="72" width="12" height="12" fill="url(#baseGold)" stroke="#b87d00" stroke-width="2"/>
-          <rect x="32" y="84" width="36" height="9" rx="2" fill="url(#baseGold)" stroke="#b87d00" stroke-width="2"/>
-          <rect x="26" y="93" width="48" height="11" rx="3" fill="#7a4a1a" stroke="#5c3612" stroke-width="2"/>
-          <rect x="40" y="96" width="20" height="5" rx="1" fill="#ffd93d" opacity="0.85"/>
-        </svg>
-        <div class="trophy-banner">🏆 الاختبار النهائي</div>
-        <div class="trophy-sub">+ الشهادة</div>
-      </div>`;
+      <button type="button" class="mt-spot mt-spot-trophy ${allDone ? 'unlocked current' : 'locked'}"
+        style="${boxStyle(TROPHY_BOX)}"
+        onclick="${allDone ? 'App.startFinalExam()' : 'App.showFinalLockedMsg()'}"
+        aria-label="الاختبار النهائي">
+        ${!allDone ? '<span class="mt-spot-badge lock">🔒</span>' : ''}
+      </button>`;
 
     $('#app').innerHTML = `
       <div class="home-view">
@@ -471,137 +387,8 @@ const App = (function() {
           <span class="motiv-text">${motivation.text}</span>
         </div>
 
-        <div class="mountain-scene">
-          <svg class="mountain-bg" viewBox="0 0 400 900" preserveAspectRatio="xMidYMid slice">
-            <defs>
-              <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="#bfe4f5"/>
-                <stop offset="45%"  stop-color="#dff0e8"/>
-                <stop offset="100%" stop-color="#f2f7e4"/>
-              </linearGradient>
-              <linearGradient id="mtnLight" x1="0" y1="0" x2="1" y2="0.3">
-                <stop offset="0%"   stop-color="#b9a184"/>
-                <stop offset="45%"  stop-color="#a08a6f"/>
-                <stop offset="100%" stop-color="#7d6a52"/>
-              </linearGradient>
-              <linearGradient id="mtnDark" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stop-color="#6f5c46"/>
-                <stop offset="100%" stop-color="#5a4a37"/>
-              </linearGradient>
-              <linearGradient id="grassG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="#95cd77"/>
-                <stop offset="100%" stop-color="#6ba854"/>
-              </linearGradient>
-              <linearGradient id="pathG" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%"   stop-color="#f0dcae"/>
-                <stop offset="50%"  stop-color="#e6cf9b"/>
-                <stop offset="100%" stop-color="#cdb076"/>
-              </linearGradient>
-              <linearGradient id="farMtn" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stop-color="#c9c4e0"/>
-                <stop offset="100%" stop-color="#a9a3c9"/>
-              </linearGradient>
-            </defs>
-
-            <rect width="400" height="900" fill="url(#skyG)"/>
-
-            <!-- سُحب -->
-            <g fill="#ffffff" opacity="0.85">
-              <ellipse cx="62"  cy="118" rx="34" ry="13"/>
-              <ellipse cx="86"  cy="112" rx="24" ry="11"/>
-              <ellipse cx="332" cy="76"  rx="36" ry="14"/>
-              <ellipse cx="306" cy="82"  rx="22" ry="10"/>
-              <ellipse cx="70"  cy="300" rx="28" ry="11"/>
-              <ellipse cx="340" cy="360" rx="30" ry="12"/>
-            </g>
-
-            <!-- جبال بعيدة مثلجة -->
-            <path d="M-10,560 L50,470 L92,510 L150,440 L200,500 L250,432 L310,492 L365,455 L410,505 L410,600 L-10,600 Z"
-                  fill="url(#farMtn)" opacity="0.6"/>
-            <path d="M150,440 L168,462 L132,462 Z M250,432 L270,456 L230,456 Z M365,455 L382,476 L348,476 Z"
-                  fill="#ffffff" opacity="0.85"/>
-
-            <!-- الجبل الرئيسي: وجه مضيء -->
-            <path d="M35,800 L110,540 L172,330 L215,175 L205,72 L245,175 L282,330 L338,540 L372,800 Z"
-                  fill="url(#mtnLight)"/>
-            <!-- الوجه المظلم (يعطي إحساس 3D) -->
-            <path d="M205,72 L245,175 L282,330 L338,540 L372,800 L250,800 L226,540 L216,330 Z"
-                  fill="url(#mtnDark)" opacity="0.9"/>
-            <!-- تجاعيد الصخر -->
-            <g stroke="#5f4f3c" stroke-width="1.4" opacity="0.4" fill="none">
-              <path d="M120,560 L150,480 L140,420"/>
-              <path d="M300,560 L272,470 L282,410"/>
-              <path d="M180,340 L200,270"/>
-              <path d="M240,300 L228,240"/>
-            </g>
-            <!-- إبراز الحافة -->
-            <path d="M205,72 L215,175 L216,330 L226,540 L250,800"
-                  stroke="#8f7a60" stroke-width="2" fill="none" opacity="0.55"/>
-
-            <!-- الطريق الملتوي: ظل ثم سطح -->
-            <path d="M200,860 C270,815 292,762 246,712 C200,662 178,618 224,568
-                     C270,518 246,462 202,424 C158,386 180,330 226,290
-                     C270,250 246,196 204,158 C182,124 200,100 212,74"
-                  fill="none" stroke="#a98d5c" stroke-width="44"
-                  stroke-linecap="round" opacity="0.35"/>
-            <path d="M200,856 C268,812 288,760 244,710 C198,660 176,616 222,566
-                     C268,516 244,460 200,422 C156,384 178,328 224,288
-                     C268,248 244,194 202,156 C180,122 198,98 210,72"
-                  fill="none" stroke="url(#pathG)" stroke-width="38" stroke-linecap="round"/>
-            <path d="M200,856 C268,812 288,760 244,710 C198,660 176,616 222,566
-                     C268,516 244,460 200,422 C156,384 178,328 224,288
-                     C268,248 244,194 202,156 C180,122 198,98 210,72"
-                  fill="none" stroke="#fbf1d6" stroke-width="4"
-                  stroke-dasharray="12 16" stroke-linecap="round" opacity="0.9"/>
-
-            <!-- عشب أمامي -->
-            <path d="M-10,760 Q70,738 150,760 T310,760 T410,752 L410,900 L-10,900 Z" fill="url(#grassG)"/>
-            <path d="M-10,790 Q90,770 190,790 T390,788 L410,790 L410,900 L-10,900 Z" fill="#5f9c49" opacity="0.65"/>
-
-            <!-- صخور -->
-            
-            <ellipse cx="150" cy="700" rx="22" ry="13" fill="#9a8974"/>
-            <ellipse cx="146" cy="696" rx="14" ry="8"  fill="#b3a189"/>
-            <ellipse cx="278" cy="640" rx="17" ry="10" fill="#9a8974"/>
-            <ellipse cx="275" cy="637" rx="11" ry="6"  fill="#b3a189"/>
-
-            <!-- شجرة صنوبر يسار -->
-            <g transform="translate(24,690)">
-              <rect x="14" y="52" width="8" height="26" fill="#6b4a2b" rx="2"/>
-              <path d="M18,-6 L-6,44 L42,44 Z" fill="#3f8c46"/>
-              <path d="M18,10 L-1,54 L37,54 Z" fill="#357a3c"/>
-              <path d="M18,26 L2,62 L34,62 Z" fill="#2d6a34"/>
-            </g>
-            <!-- شجيرة -->
-            <g transform="translate(88,742)">
-              <ellipse cx="16" cy="16" rx="26" ry="17" fill="#4f9c4c"/>
-              <ellipse cx="8"  cy="12" rx="16" ry="12" fill="#5cad57"/>
-            </g>
-            <!-- شجرة يمين -->
-            <g transform="translate(330,700)">
-              <rect x="12" y="44" width="7" height="22" fill="#6b4a2b" rx="2"/>
-              <ellipse cx="16" cy="34" rx="24" ry="20" fill="#4f9c4c"/>
-              <ellipse cx="10" cy="28" rx="14" ry="12" fill="#61b45b"/>
-            </g>
-
-            <!-- نافورة الوضوء -->
-            <g transform="translate(150,790)">
-              <ellipse cx="16" cy="26" rx="26" ry="8" fill="#8d9aa5"/>
-              <rect x="12" y="10" width="8" height="16" fill="#9aa7b2" rx="2"/>
-              <ellipse cx="16" cy="9" rx="15" ry="5" fill="#a9b6c1"/>
-              <path d="M16,4 C12,-4 20,-4 16,4" stroke="#5eb3e4" stroke-width="2.5" fill="none"/>
-              <circle cx="9"  cy="0"  r="2" fill="#7cc6ee"/>
-              <circle cx="23" cy="-1" r="2" fill="#7cc6ee"/>
-              <circle cx="16" cy="-6" r="2" fill="#7cc6ee"/>
-            </g>
-
-            <!-- سور حجري سفلي -->
-            <rect x="-10" y="866" width="420" height="34" fill="#c4bdb0"/>
-            <g stroke="#a89f90" stroke-width="1.6" fill="none">
-              <path d="M-10,880 H410"/>
-              <path d="M20,866 V880 M80,880 V900 M140,866 V880 M200,880 V900 M260,866 V880 M320,880 V900 M380,866 V880"/>
-            </g>
-          </svg>
+        <div class="mountain-scene mountain-scene-img">
+          <img class="mountain-img" src="assets/map/mountain.webp" alt="خريطة رحلة التعلّم" draggable="false"/>
 
           <div class="mountain-overlay">
             ${trophyHTML}
@@ -668,6 +455,10 @@ const App = (function() {
   function toArabicOrdinal(n) {
     const names = ['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع','العاشر'];
     return names[n - 1] || n;
+  }
+
+  function showFinalLockedMsg() {
+    Character.sayCustom('🏆 الاختبار النهائي يُفتح بعد أن تُكمل جميع الفصول الثمانية. واصل الصعود! 💪');
   }
 
   function showLockedMsg(chapterId) {
@@ -2387,7 +2178,7 @@ const App = (function() {
     init,
     completeOnboarding, handleImport,
     goHome, showJourneyMap, openChapter, openLesson,
-    showLockedMsg, toggleRecord, playRecording,
+    showLockedMsg, showFinalLockedMsg, toggleRecord, playRecording,
     startQuiz, answerQuiz, answerOrder,
     answerFillChoice, selectMatchKey, selectMatchVal, answerMatch,
     retakeQuiz, finishLesson,
