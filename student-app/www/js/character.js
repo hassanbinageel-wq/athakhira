@@ -145,10 +145,17 @@ const Character = (function() {
       container.id = 'character-container';
       container.className = 'character-container hidden';
       container.innerHTML = `
-        <div class="character-bubble" id="character-bubble"></div>
-        <img id="character-img" class="character-img" alt="الشخصية المرافقة" />
+        <div class="character-card" role="dialog" aria-live="polite">
+          <img id="character-img" class="character-img" alt="الشخصية المرافقة" />
+          <div class="character-bubble" id="character-bubble"></div>
+          <button type="button" class="character-ok" id="character-ok">حسناً 👍</button>
+        </div>
       `;
       document.body.appendChild(container);
+      // الإغلاق بزر «حسناً» أو بالضغط خارج البطاقة
+      container.addEventListener('click', (e) => {
+        if (e.target === container || e.target.id === 'character-ok') forceHide();
+      });
     }
 
     img = document.getElementById('character-img');
@@ -166,7 +173,7 @@ const Character = (function() {
   }
 
   // ═══════════════════ عرض الرسالة ═══════════════════
-  function say(messageKey, extraVars = {}, duration = 4000) {
+  function say(messageKey, extraVars = {}, duration = 4000, autoClose = false) {
     if (!container) return;
 
     const messages = getMessages()[messageKey];
@@ -175,29 +182,25 @@ const Character = (function() {
     const raw = pick(messages);
     const text = replace(raw, { name: userName, ...extraVars });
 
-    bubble.textContent = text;
-    container.classList.remove('hidden');
-    container.classList.add('active', 'pop');
+    show(text, autoClose ? duration : 0);
+  }
 
+  // تظهر الرسالة في وسط الشاشة وتبقى حتى يضغط الطالب «حسناً».
+  // autoCloseMs > 0 → تُغلق تلقائياً أيضاً (لرسائل الإجابة أثناء الاختبار).
+  function show(text, autoCloseMs = 0) {
+    bubble.textContent = text;
+    container.classList.remove('hidden', 'pop');
+    void container.offsetWidth;
+    container.classList.add('active', 'pop');
     clearTimeout(currentTimeout);
-    currentTimeout = setTimeout(() => {
-      container.classList.remove('pop');
-      hide(duration);
-    }, 50);
+    if (autoCloseMs > 0) hide(autoCloseMs);
   }
 
   function sayCustom(text, duration = 4000) {
     if (!container || !text) return;
     // تحويل تلقائي للنصّ المخصّص حسب الجنس
     const finalText = adaptGenderInText(text);
-    bubble.textContent = finalText;
-    container.classList.remove('hidden');
-    container.classList.add('active', 'pop');
-    clearTimeout(currentTimeout);
-    currentTimeout = setTimeout(() => {
-      container.classList.remove('pop');
-      hide(duration);
-    }, 50);
+    show(finalText);
   }
 
   // تكييف النصّ للأنثى تلقائياً (يحوّل الكلمات المذكّرة للمؤنّثة)
@@ -244,22 +247,22 @@ const Character = (function() {
     clearTimeout(currentTimeout);
     currentTimeout = setTimeout(() => {
       container?.classList.add('hidden');
-      container?.classList.remove('active');
+      container?.classList.remove('active', 'pop');
     }, delay);
   }
 
   function forceHide() {
     clearTimeout(currentTimeout);
     container?.classList.add('hidden');
-    container?.classList.remove('active');
+    container?.classList.remove('active', 'pop');
   }
 
   return {
     init, setGender, setName, say, sayCustom, hide, forceHide,
     greet:          () => say('greeting'),
     lessonStart:    () => say('lessonStart'),
-    correct:        () => say('correctAnswer', {}, 2500),
-    wrong:          () => say('wrongAnswer', {}, 3000),
+    correct:        () => say('correctAnswer', {}, 2500, true),
+    wrong:          () => say('wrongAnswer', {}, 3000, true),
     lessonDone:     () => say('lessonComplete'),
     chapterUnlock:  () => say('chapterUnlock', {}, 5000),
     levelUp:        (levelName) => say('levelUp', { level: levelName }, 5000),
