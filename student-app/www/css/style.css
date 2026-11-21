@@ -2632,3 +2632,61 @@ img { display: block; max-width: 100%; }
   border-radius: 12px;
   background: #000;
 }
+
+/* ═══════════ رسالة صح/خطأ تحت الأسئلة ═══════════ */
+.quiz-feedback {
+  display: none;
+  align-items: center; gap: 12px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 18px;
+  border: 2px solid var(--emerald-500);
+  background: #ecf8f1;
+  animation: qfIn .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+.quiz-feedback.show { display: flex; }
+.quiz-feedback.wrong { border-color: #e0a100; background: #fff7e0; }
+.qf-img { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; }
+.qf-text {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 800; line-height: 1.5;
+  color: var(--emerald-900);
+}
+@keyframes qfIn { from { transform: translateY(10px); opacity: 0; } }
+
+/* ═══════════ الشاشة الرئيسية المضغوطة: الخريطة تظهر كاملة ═══════════ */
+.home-view { padding-top: 10px; }
+.home-header.hc-header { padding: 8px 12px; margin-bottom: 8px; }
+.hc-header .hh-avatar { width: 42px; height: 42px; }
+.hc-header .hh-name { font-size: 16px; }
+.hc-header .hh-btn { width: 40px; height: 40px; font-size: 18px; }
+.hc-stats {
+  background: var(--paper, #fff);
+  border-radius: 16px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.hc-chips { display: flex; justify-content: space-between; gap: 6px; }
+.hc-chip {
+  font-size: 13px; font-weight: 700; color: var(--ink-500, #556);
+  white-space: nowrap;
+}
+.hc-chip b { font-family: var(--font-display); font-size: 16px; color: var(--emerald-900); }
+.hc-level {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 6px;
+  font-size: 12px; font-weight: 700; color: var(--emerald-900);
+  white-space: nowrap;
+}
+.hc-track { flex: 1; height: 7px; border-radius: 4px; background: #e3e7e4; overflow: hidden; }
+.hc-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #ffd93d, #d18f00); }
+.road-heading.hc-heading { font-size: 18px; margin: 4px 0 6px; }
+.home-view .motivation-banner { padding: 8px 12px; margin-bottom: 10px; gap: 10px; }
+.home-view .motiv-emoji { font-size: 24px; width: auto; height: auto; }
+.home-view .motiv-text { font-size: 13.5px; line-height: 1.6; }
+.home-view .review-badge { margin-bottom: 8px; padding: 8px 12px; }
+
+/* الخريطة تأخذ ما تبقّى من ارتفاع الشاشة وتصغر بنسبتها لتظهر كاملة */
+.mountain-scene.mountain-scene-img { margin-inline: auto; }

@@ -245,14 +245,14 @@ const App = (function() {
 
     // ═══ مواضع الشخصيّة على المسار المرسوم (بكسل في الصورة: [x, y]) ═══
     const walkerByChapter = {
-      1: [510, 1440],   // على المسار بين البوّابة والنافورة (لا تغطّي نصّ البوّابة)
-      2: [640, 1250],
-      3: [560, 1150],
-      4: [540, 1100],
-      5: [560, 960],
-      6: [590, 780],
-      7: [540, 640],
-      8: [540, 450]     // تحت الكأس ولا تغطّي لافتة الفصل الثامن
+      1: [390, 1850],   // عند مدخل البوّابة (بين الدرفتين)
+      2: [820, 1660],   // على المسار بجانب لافتة الفصل الثاني
+      3: [620, 1350],   // بجانب لافتة الفصل الثالث
+      4: [540, 1290],   // بجانب لافتة الفصل الرابع
+      5: [510, 1080],   // بجانب لافتة الفصل الخامس
+      6: [690, 960],    // تحت لافتة الفصل السادس
+      7: [480, 760],    // تحت لافتة الفصل السابع
+      8: [730, 560]     // تحت لافتة الفصل الثامن
     };
     const [wx, wy] = walkerByChapter[currentChapterId] || walkerByChapter[1];
 
@@ -267,8 +267,11 @@ const App = (function() {
     function buildMotivation() {
       const curCh = CHAPTERS.find(c => c.id === currentChapterId);
       const nextCh = CHAPTERS.find(c => c.id === currentChapterId + 1);
-      const curStars = Gamification.state.starsByChapter[currentChapterId] || 0;
-      const need = Math.max(0, CONFIG.STARS_TO_UNLOCK_CHAPTER - curStars);
+      // الفصل التالي يُفتح باجتياز كل دروس الفصل الحالي (لا بالنجوم)
+      const passedInCur = Gamification.state.completedLessons
+        .filter(l => l.chapterId === currentChapterId).length;
+      const left = Math.max(0, (curCh?.lessons.length || 0) - passedInCur);
+      const needTxt = left === 1 ? 'درس واحد' : left === 2 ? 'درسان' : `${left} دروس`;
 
       if (allDone) {
         return {
@@ -281,30 +284,30 @@ const App = (function() {
       const perChapter = {
         1: [
           `بدأت الرحلة من البوّابة! تعلّم أركان الدين ثم اصعد نحو ${nextCh?.shortTitle || 'الفصل التالي'} 🌟`,
-          `أنت في الأساس المتين. باقي ${need} نجمة وتفتح "${nextCh?.shortTitle || ''}" 💧`
+          `أنت في الأساس المتين. باقي ${needTxt} وتفتح "${nextCh?.shortTitle || ''}" 💧`
         ],
         2: [
-          `الطهارة نصف الإيمان! باقي ${need} نجمة لتصل إلى "${nextCh?.shortTitle || ''}" 🕌`,
+          `الطهارة نصف الإيمان! باقي ${needTxt} لتصل إلى "${nextCh?.shortTitle || ''}" 🕌`,
           `أحسنت! كل وضوء تتعلّمه يقرّبك من قمّة الجبل ✨`
         ],
         3: [
-          `الصلاة عمود الدين — باقي ${need} نجمة وتفتح "${nextCh?.shortTitle || ''}" 🤲`,
+          `الصلاة عمود الدين — باقي ${needTxt} وتفتح "${nextCh?.shortTitle || ''}" 🤲`,
           `أنت في منتصف الطريق تقريباً! واصل الصعود 💪`
         ],
         4: [
-          `أدعية جميلة تحفظها! باقي ${need} نجمة لـ"${nextCh?.shortTitle || ''}" 🌤️`,
+          `أدعية جميلة تحفظها! باقي ${needTxt} لـ"${nextCh?.shortTitle || ''}" 🌤️`,
           `كل دعاء تحفظه كنزٌ لك. استمرّ! 🗝️`
         ],
         5: [
-          `صرت تعرف دعاء كل حال! باقي ${need} نجمة لـ"${nextCh?.shortTitle || ''}" 📜`,
+          `صرت تعرف دعاء كل حال! باقي ${needTxt} لـ"${nextCh?.shortTitle || ''}" 📜`,
           `تجاوزت نصف الجبل — القمّة أقرب مما تظنّ 🏔️`
         ],
         6: [
-          `تتعرّف على نبيّك ﷺ — باقي ${need} نجمة لـ"${nextCh?.shortTitle || ''}" 🕌`,
+          `تتعرّف على نبيّك ﷺ — باقي ${needTxt} لـ"${nextCh?.shortTitle || ''}" 🕌`,
           `معرفة النبي ﷺ شرف عظيم. واصل يا بطل! 💚`
         ],
         7: [
-          `باقي فصل واحد فقط! ${need} نجمة وتفتح "${nextCh?.shortTitle || ''}" 🌅`,
+          `باقي فصل واحد فقط! ${needTxt} وتفتح "${nextCh?.shortTitle || ''}" 🌅`,
           `أنت قريب جداً من القمّة — لا تتوقّف الآن! ⛰️`
         ],
         8: [
@@ -334,7 +337,7 @@ const App = (function() {
 
     $('#app').innerHTML = `
       <div class="home-view">
-        <header class="home-header">
+        <header class="home-header hc-header">
           <div class="hh-user">
             <img class="hh-avatar" src="${Character.imgPath}" alt="أنت"/>
             <div>
@@ -348,39 +351,23 @@ const App = (function() {
           </div>
         </header>
 
-        <div class="hh-stats">
-          <div class="stat-card">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-val">${Gamification.stars}</div>
-            <div class="stat-lbl">نجمة</div>
+        <div class="hc-stats" ${nextLevel ? 'onclick="App.showLevelDetails()"' : ''}>
+          <div class="hc-chips">
+            <span class="hc-chip">⭐ <b>${Gamification.stars}</b> نجمة</span>
+            <span class="hc-chip">🔥 <b>${Gamification.streak}</b> يوم</span>
+            <span class="hc-chip">⚡ <b>${Gamification.xp}</b> XP</span>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">🔥</div>
-            <div class="stat-val">${Gamification.streak}</div>
-            <div class="stat-lbl">يوم متواصل</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">⚡</div>
-            <div class="stat-val">${Gamification.xp}</div>
-            <div class="stat-lbl">XP</div>
-          </div>
-        </div>
-
-        ${nextLevel ? `
-          <div class="level-bar" onclick="App.showLevelDetails()">
-            <div class="level-bar-label">
-              <span>${level.icon} ${level.name}</span>
-              <span>${Gamification.xp}/${nextLevel.minXP} XP</span>
+          ${nextLevel ? `
+            <div class="hc-level">
+              <span>${level.icon}</span>
+              <div class="hc-track"><div class="hc-fill" style="width:${levelProgress}%"></div></div>
               <span>${nextLevel.icon} ${nextLevel.name}</span>
-            </div>
-            <div class="level-bar-track">
-              <div class="level-bar-fill" style="width:${levelProgress}%"></div>
-            </div>
-          </div>` : ''}
+            </div>` : ''}
+        </div>
 
         ${reviewBadge}
 
-        <h2 class="road-heading">🏔️ رحلة التعلّم</h2>
+        <h2 class="road-heading hc-heading">🏔️ رحلة التعلّم</h2>
 
         <div class="motivation-banner">
           <span class="motiv-emoji">${motivation.emoji}</span>
@@ -399,6 +386,8 @@ const App = (function() {
       </div>
     `;
 
+    fitMapToScreen();
+
     // إشعار فتح فصل جديد (إن وُجد)
     const newUnlock = sessionStorage.getItem('newlyUnlocked');
     if (newUnlock) {
@@ -409,6 +398,19 @@ const App = (function() {
       } catch (e) {}
     }
   }
+
+  // الخريطة تأخذ ما تبقّى من ارتفاع الشاشة تحت المعلومات العلويّة وتصغر بنسبتها لتظهر كاملة
+  function fitMapToScreen() {
+    const scene = document.querySelector('.mountain-scene-img');
+    if (!scene) return;
+    scene.style.width = '';
+    const fullW = scene.parentElement.clientWidth;
+    const top = scene.getBoundingClientRect().top + window.scrollY;
+    const avail = window.innerHeight - top - 12;
+    const w = Math.max(240, Math.min(fullW, Math.floor(avail * 1116 / 2000)));
+    scene.style.width = w + 'px';
+  }
+  window.addEventListener('resize', () => { if (currentViewName === 'home') fitMapToScreen(); });
 
   // ═══════════════════ إشعار فتح الفصل الجديد ═══════════════════
   function showUnlockBanner(info) {
@@ -1108,6 +1110,7 @@ const App = (function() {
           <div class="quiz-topic">${q.topic || ''}</div>
           ${q.type === 'fill' ? '' : `<h2 class="quiz-question">${q.q}</h2>`}
           <div class="quiz-options">${questionHTML}</div>
+          <div class="quiz-feedback" id="quiz-feedback" aria-live="polite"></div>
         </div>
       </div>
     `;

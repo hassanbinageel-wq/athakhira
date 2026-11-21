@@ -203,6 +203,20 @@ const Character = (function() {
     show(finalText);
   }
 
+  // رسالة «صح/خطأ» أثناء الاختبار: تظهر تحت الأسئلة (#quiz-feedback) بحجم متوسط،
+  // وليست نافذة وسط الشاشة. إن لم يوجد المكان تُعرض كنافذة عادية.
+  function feedback(messageKey, isCorrect) {
+    const box = document.getElementById('quiz-feedback');
+    const messages = getMessages()[messageKey];
+    if (!messages) return;
+    const text = replace(pick(messages), { name: userName });
+    if (!box) { if (container) show(text, 2500); return; }
+    box.className = `quiz-feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+    box.innerHTML = `<img class="qf-img" src="assets/characters/${gender}.png" alt=""/>
+                     <span class="qf-text"></span>`;
+    box.querySelector('.qf-text').textContent = text;
+  }
+
   // تكييف النصّ للأنثى تلقائياً (يحوّل الكلمات المذكّرة للمؤنّثة)
   function adaptGenderInText(text) {
     if (gender !== 'girl') return text;
@@ -261,8 +275,8 @@ const Character = (function() {
     init, setGender, setName, say, sayCustom, hide, forceHide,
     greet:          () => say('greeting'),
     lessonStart:    () => say('lessonStart'),
-    correct:        () => say('correctAnswer', {}, 2500, true),
-    wrong:          () => say('wrongAnswer', {}, 3000, true),
+    correct:        () => feedback('correctAnswer', true),
+    wrong:          () => feedback('wrongAnswer', false),
     lessonDone:     () => say('lessonComplete'),
     chapterUnlock:  () => say('chapterUnlock', {}, 5000),
     levelUp:        (levelName) => say('levelUp', { level: levelName }, 5000),
