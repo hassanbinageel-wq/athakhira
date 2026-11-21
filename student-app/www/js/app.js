@@ -204,22 +204,22 @@ const App = (function() {
       return d === ch.lessons.length;
     });
 
-    // ═══ الخريطة صورة جاهزة (assets/map/mountain.webp — 1116×2000) ═══
+    // ═══ الخريطة صورة جاهزة (assets/map/mountain.webp — 1228×2000) ═══
     // اللافتات والأيقونات والنصوص مرسومة في الصورة نفسها،
     // وهنا فقط مناطق ضغط شفّافة فوقها + حالة القفل/الإكمال + الشخصيّة.
     // الإحداثيات بالبكسل في الصورة الأصليّة: [x1, y1, x2, y2]
-    const MAP_W = 1116, MAP_H = 2000;
+    const MAP_W = 1228, MAP_H = 2000;
     const hotspots = {
-      1: [45, 1575, 735, 2000],   // البوّابة
-      2: [740, 1340, 1065, 1545],
-      3: [765, 1050, 1075, 1295],
-      4: [130, 1160, 430, 1370],
-      5: [60, 760, 390, 1020],
-      6: [725, 540, 1015, 820],
-      7: [150, 430, 415, 630],
-      8: [680, 255, 975, 445]
+      1: [40, 1570, 800, 2000],   // البوّابة
+      2: [810, 1340, 1110, 1545],
+      3: [140, 1130, 470, 1385],
+      4: [660, 900, 990, 1125],
+      5: [70, 760, 430, 1025],
+      6: [800, 540, 1100, 825],
+      7: [170, 430, 460, 645],
+      8: [744, 265, 1070, 455]
     };
-    const TROPHY_BOX = [415, 60, 700, 320];
+    const TROPHY_BOX = [460, 60, 770, 320];
     const boxStyle = ([x1, y1, x2, y2]) =>
       `left:${(x1 / MAP_W * 100).toFixed(2)}%; top:${(y1 / MAP_H * 100).toFixed(2)}%;` +
       ` width:${((x2 - x1) / MAP_W * 100).toFixed(2)}%; height:${((y2 - y1) / MAP_H * 100).toFixed(2)}%;`;
@@ -245,22 +245,21 @@ const App = (function() {
 
     // ═══ مواضع الشخصيّة على المسار المرسوم (بكسل في الصورة: [x, y]) ═══
     const walkerByChapter = {
-      1: [390, 1850],   // عند مدخل البوّابة (بين الدرفتين)
-      2: [820, 1660],   // على المسار بجانب لافتة الفصل الثاني
-      3: [620, 1350],   // بجانب لافتة الفصل الثالث
-      4: [540, 1290],   // بجانب لافتة الفصل الرابع
-      5: [510, 1080],   // بجانب لافتة الفصل الخامس
-      6: [690, 960],    // تحت لافتة الفصل السادس
-      7: [480, 760],    // تحت لافتة الفصل السابع
-      8: [730, 560]     // تحت لافتة الفصل الثامن
+      1: [440, 1880],   // عند مدخل البوّابة (بين الدرفتين)
+      2: [940, 1680],   // على المسار تحت لافتة الفصل الثاني
+      3: [590, 1300],   // بجانب لافتة الفصل الثالث
+      4: [550, 1070],   // بجانب لافتة الفصل الرابع
+      5: [555, 1020],   // بجانب لافتة الفصل الخامس
+      6: [680, 810],    // بجانب لافتة الفصل السادس
+      7: [570, 640],    // بجانب لافتة الفصل السابع
+      8: [790, 550]     // تحت لافتة الفصل الثامن
     };
     const [wx, wy] = walkerByChapter[currentChapterId] || walkerByChapter[1];
 
     const characterHTML = `
       <div class="mt-walker" style="top:${(wy / MAP_H * 100).toFixed(2)}%; left:${(wx / MAP_W * 100).toFixed(2)}%;">
         <div class="mt-walker-glow"></div>
-        <img class="mt-walker-img" src="${Character.imgPath}" alt="أنت هنا"/>
-        <div class="mt-walker-label">أنت هنا</div>
+        <img class="mt-walker-img" src="${Character.imgPath}" alt="مكانك في الرحلة"/>
       </div>`;
 
     // ═══ العبارة التحفيزيّة (تتغيّر مع كل فصل) ═══
@@ -407,7 +406,7 @@ const App = (function() {
     const fullW = scene.parentElement.clientWidth;
     const top = scene.getBoundingClientRect().top + window.scrollY;
     const avail = window.innerHeight - top - 12;
-    const w = Math.max(240, Math.min(fullW, Math.floor(avail * 1116 / 2000)));
+    const w = Math.max(240, Math.min(fullW, Math.floor(avail * 1228 / 2000)));
     scene.style.width = w + 'px';
   }
   window.addEventListener('resize', () => { if (currentViewName === 'home') fitMapToScreen(); });
