@@ -482,9 +482,12 @@ const App = (function() {
 
           <div class="settings-section">
             <h3>📚 كتاب الذخيرة المشرفة</h3>
-            <p class="settings-hint">النسخة الكاملة من الكتاب موجودة داخل التطبيق، وتُحفظ على جهازك في مجلد «المستندات» بضغطة واحدة</p>
-            <button class="btn primary block" onclick="App.downloadBook()">
-              📥 تحميل الكتاب على جهازك
+            <p class="settings-hint">النسخة الكاملة من الكتاب موجودة داخل التطبيق، وتعمل بدون إنترنت</p>
+            <button class="btn primary block" onclick="App.openBook()">
+              📖 افتح الكتاب
+            </button>
+            <button class="btn secondary block" onclick="App.downloadBook()" style="margin-top:10px">
+              📥 حفظ الكتاب في مجلد «المستندات»
             </button>
           </div>
 
@@ -2148,43 +2151,89 @@ const App = (function() {
 
   // ═══════════════════ تحميل PDF (يفتح Google Drive في المتصفح) ═══════════════════
   // الكتاب داخل التطبيق (assets/book/book.pdf) — لا رابط خارجي ولا دومين.
-  // على الجوال: يُحفظ تلقائياً في مجلد «المستندات Documents» عبر إضافة Filesystem.
-  let bookSaving = false;
-  async function downloadBook() {
-    const FS = window.Capacitor?.Plugins?.Filesystem;
-    const fileName = CONFIG.BOOK_FILE_NAME || 'الذخيرة المشرفة.pdf';
-    if (!window.Capacitor?.isNativePlatform?.() || !FS) {
-      window.open(CONFIG.BOOK_PDF_PATH, '_blank');   // المعاينة في المتصفح
-      return;
-    }
-    if (bookSaving) return;
-    bookSaving = true;
-    try {
-      Gamification.showToast('📥 جارٍ حفظ الكتاب على جهازك...', 'info', 2500);
-      const res = await fetch(CONFIG.BOOK_PDF_PATH);
-      if (!res.ok) throw new Error('book missing');
-      const bytes = new Uint8Array(await res.arrayBuffer());
-      // نكتب على دفعات حتى لا نمرّر نصّاً ضخماً دفعة واحدة
-      const CHUNK = 768 * 1024;   // مضاعف 3 حتى يبقى كل جزء base64 سليماً
-      for (let i = 0; i < bytes.length; i += CHUNK) {
-        const part = bytes.subarray(i, i + CHUNK);
-        let bin = '';
-        for (let j = 0; j < part.length; j += 0x8000) {
-          bin += String.fromCharCode.apply(null, part.subarray(j, j + 0x8000));
-        }
-        const data = btoa(bin);
-        const opts = { path: fileName, data, directory: 'DOCUMENTS' };
-        if (i === 0) await FS.writeFile({ ...opts, recursive: true });
-        else await FS.appendFile(opts);
+  // «حفظ»: يُكتب في مجلد «المستندات» Documents (إضافة Filesystem).
+  // «فتح»: يُحفظ إن لم يكن محفوظاً، ثم يُفتح في قارئ الكتب على الجهاز (إضافة FileOpener).
+  let bookBusy = false;
+
+  async function writeBook(FS, directory) {
+    const fileName = CONFIG.BOOK_FILE_NAME;
+    const res = await fetch(CONFIG.BOOK_PDF_PATH);
+    if (!res.ok) throw new Error('book missing');
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    // نكتب على دفعات حتى لا نمرّر نصّاً ضخماً دفعة واحدة
+    const CHUNK = 768 * 1024;   // مضاعف 3 حتى يبقى كل جزء base64 سليماً
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      const part = bytes.subarray(i, i + CHUNK);
+      let bin = '';
+      for (let j = 0; j < part.length; j += 0x8000) {
+        bin += String.fromCharCode.apply(null, part.subarray(j, j + 0x8000));
       }
-      Character.sayCustom('📚 تم حفظ الكتاب على جهازك! تجده في مجلد «المستندات» باسم: ' + fileName);
+      const opts = { path: fileName, data: btoa(bin), directory };
+      if (i === 0) await FS.writeFile({ ...opts, recursive: true });
+      else await FS.appendFile(opts);
+    }
+    return (await FS.getUri({ path: fileName, directory })).uri;
+  }
+
+  // يرجع رابط الكتاب المحفوظ في المستندات (ويحفظه أولاً إن لم يكن موجوداً بالحجم الصحيح)
+  async function ensureBookSaved(FS) {
+    try {
+      const st = await FS.stat({ path: CONFIG.BOOK_FILE_NAME, directory: 'DOCUMENTS' });
+      if (st && st.size === CONFIG.BOOK_SIZE) return st.uri;
+    } catch (e) { /* غير موجود */ }
+    Gamification.showToast('📥 جارٍ حفظ الكتاب على جهازك...', 'info', 2500);
+    return writeBook(FS, 'DOCUMENTS');
+  }
+
+  function bookPlugins() {
+    const P = window.Capacitor?.Plugins || {};
+    if (!window.Capacitor?.isNativePlatform?.() || !P.Filesystem) return null;
+    return { FS: P.Filesystem, Opener: P.FileOpener };
+  }
+
+  async function downloadBook() {
+    const pl = bookPlugins();
+    if (!pl) { window.open(CONFIG.BOOK_PDF_PATH, '_blank'); return; }   // المعاينة في المتصفح
+    if (bookBusy) return;
+    bookBusy = true;
+    try {
+      await ensureBookSaved(pl.FS);
+      Character.sayCustom('📚 الكتاب محفوظ على جهازك! تجده في مجلد «المستندات» باسم: ' + CONFIG.BOOK_FILE_NAME);
     } catch (e) {
       console.error('downloadBook', e);
       Gamification.showToast('تعذّر حفظ الكتاب. تأكد من وجود مساحة كافية في الجهاز.', 'warning', 4000);
     } finally {
-      bookSaving = false;
+      bookBusy = false;
     }
   }
+
+  async function openBook() {
+    const pl = bookPlugins();
+    if (!pl || !pl.Opener) { window.open(CONFIG.BOOK_PDF_PATH, '_blank'); return; }
+    if (bookBusy) return;
+    bookBusy = true;
+    const open = (uri) => pl.Opener.open({ filePath: uri, contentType: 'application/pdf', openWithDefault: true });
+    try {
+      try {
+        await open(await ensureBookSaved(pl.FS));
+      } catch (e) {
+        // لا يوجد قارئ كتب على الجهاز
+        if (String(e?.code) === '8' || /Activity not found/i.test(e?.message || '')) throw e;
+        // تعذّر الوصول لنسخة المستندات (مثلاً بعد إعادة تثبيت التطبيق): نفتح نسخة مؤقّتة داخليّة
+        await open(await writeBook(pl.FS, 'CACHE'));
+      }
+    } catch (e) {
+      console.error('openBook', e);
+      if (String(e?.code) === '8' || /Activity not found/i.test(e?.message || '')) {
+        Character.sayCustom('📖 لا يوجد على الجهاز تطبيق لقراءة الكتب. ثبّت تطبيق «جوجل درايف» أو أي قارئ كتب ثم حاول مرّة أخرى. والكتاب محفوظ في مجلد «المستندات».');
+      } else {
+        Gamification.showToast('تعذّر فتح الكتاب. حاول مرّة أخرى.', 'warning', 4000);
+      }
+    } finally {
+      bookBusy = false;
+    }
+  }
+
 
 
   function showLevelDetails() {
@@ -2229,7 +2278,7 @@ const App = (function() {
     answerFillChoice, selectMatchKey, selectMatchVal, answerMatch,
     retakeQuiz, finishLesson,
     startReview, startFinalExam,
-    downloadBook, showLevelDetails,
+    downloadBook, openBook, showLevelDetails,
     showSettings, editProfile, exportProgress, resetAll, playRec,
     showRecordings, deleteRec, showCertificate, shareCertificate,
     downloadCertPNG, downloadCertPDF,

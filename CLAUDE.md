@@ -51,7 +51,7 @@ student-app/
 - **أشرطة النظام (Edge-to-Edge في أندرويد 15):** `capacitor.config.json` فيه `android.adjustMarginsForEdgeToEdge: "auto"` حتى لا يغطي شريط الحالة وشريط الأزرار محتوى التطبيق (`env(safe-area-inset-*)` يرجع صفراً في WebView فلا تعتمد عليه). وخطوة «Green system bars background» في الـworkflow تلوّن خلفية الشريطين بالأخضر `#0d3b2e` وتجعل أيقوناتهما بيضاء. لا تحذفهما.
 - خطوة **حقن صلاحية الميكروفون** (`RECORD_AUDIO` و `MODIFY_AUDIO_SETTINGS`) في `AndroidManifest.xml` يجب أن تبقى **بعد** `cap add android` و**قبل** `cap sync`. لا تحذفها.
 - لا يوجد `package-lock.json`، فلا تضف `cache: 'npm'` إلى `setup-node`.
-- **تحميل الكتاب:** الكتاب داخل التطبيق (`assets/book/book.pdf`). زر «📥 تحميل الكتاب على جهازك» (`downloadBook`) يحفظه في مجلد «المستندات» Documents بإضافة `@capacitor/filesystem` (على دفعات base64). **لا روابط خارجية ولا دومين** — المطوّر لا يريد ظهور أي رابط. خطوة «Storage permission for saving the book» في الـworkflow تضيف `WRITE_EXTERNAL_STORAGE` (حتى أندرويد 10) و`requestLegacyExternalStorage`. لا تحذفها.
+- **الكتاب:** داخل التطبيق (`assets/book/book.pdf`). في الإعدادات زرّان: «📖 افتح الكتاب» (`openBook`: يحفظه في المستندات إن لم يكن محفوظاً ثم يفتحه في قارئ الجهاز بإضافة `@capacitor-community/file-opener`، ومع بديل نسخة مؤقّتة في CACHE) و«📥 حفظ الكتاب في مجلد المستندات» (`downloadBook`، بإضافة `@capacitor/filesystem` على دفعات base64). `CONFIG.BOOK_SIZE` يجب تحديثه إن تغيّر ملف الكتاب. **لا روابط خارجية ولا دومين** — المطوّر لا يريد ظهور أي رابط. خطوة «Storage permission for saving the book» في الـworkflow تضيف `WRITE_EXTERNAL_STORAGE` (حتى أندرويد 10) و`requestLegacyExternalStorage`. لا تحذفها.
 
 ## قبل كل commit
 
