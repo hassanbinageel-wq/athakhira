@@ -32,8 +32,9 @@ student-app/
     ├── index.html
     ├── css/style.css
     ├── assets/characters/        ← boy.png, girl.png, boy-happy.png, girl-happy.png
+    ├── assets/book/book.pdf      ← الكتاب كاملاً (مضمَّن، بدون أي رابط خارجي)
     └── js/
-        ├── config.js             ← إعدادات عامة ورابط الكتاب PDF
+        ├── config.js             ← إعدادات عامة ومسار الكتاب (BOOK_PDF_PATH)
         ├── data.js               ← المحتوى: 8 فصول، 29 درساً، الأسئلة
         ├── gamification.js       ← النجوم، XP، الدرجات، فتح الفصول
         ├── character.js          ← الشخصية المرافقة ورسائلها
@@ -50,6 +51,7 @@ student-app/
 - **أشرطة النظام (Edge-to-Edge في أندرويد 15):** `capacitor.config.json` فيه `android.adjustMarginsForEdgeToEdge: "auto"` حتى لا يغطي شريط الحالة وشريط الأزرار محتوى التطبيق (`env(safe-area-inset-*)` يرجع صفراً في WebView فلا تعتمد عليه). وخطوة «Green system bars background» في الـworkflow تلوّن خلفية الشريطين بالأخضر `#0d3b2e` وتجعل أيقوناتهما بيضاء. لا تحذفهما.
 - خطوة **حقن صلاحية الميكروفون** (`RECORD_AUDIO` و `MODIFY_AUDIO_SETTINGS`) في `AndroidManifest.xml` يجب أن تبقى **بعد** `cap add android` و**قبل** `cap sync`. لا تحذفها.
 - لا يوجد `package-lock.json`، فلا تضف `cache: 'npm'` إلى `setup-node`.
+- **تحميل الكتاب:** الكتاب داخل التطبيق (`assets/book/book.pdf`). زر «📥 تحميل الكتاب على جهازك» (`downloadBook`) يحفظه في مجلد «المستندات» Documents بإضافة `@capacitor/filesystem` (على دفعات base64). **لا روابط خارجية ولا دومين** — المطوّر لا يريد ظهور أي رابط. خطوة «Storage permission for saving the book» في الـworkflow تضيف `WRITE_EXTERNAL_STORAGE` (حتى أندرويد 10) و`requestLegacyExternalStorage`. لا تحذفها.
 
 ## قبل كل commit
 

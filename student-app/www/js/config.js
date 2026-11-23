@@ -25,7 +25,9 @@ const CONFIG = {
 
   // ═══════ الكتاب ═══════
   // رابط Google Drive المشترك — يفتح في المتصفح للتحميل/العرض
-  BOOK_PDF_URL: 'https://drive.google.com/file/d/1t2rW-g_BpJ5eW5X-nPKdKecvFy2ltQlH/view?usp=sharing',
+  // الكتاب مضمَّن في التطبيق (لا رابط خارجي)
+  BOOK_PDF_PATH: 'assets/book/book.pdf',
+  BOOK_FILE_NAME: 'الذخيرة المشرفة.pdf',
 
   // ═══════ المراجعة الذكية ═══════
   REVIEW_INTERVAL_DAYS: 3,

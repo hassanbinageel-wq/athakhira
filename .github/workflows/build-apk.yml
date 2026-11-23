@@ -48,6 +48,15 @@ jobs:
             grep "uses-permission" "$MANIFEST"
           fi
 
+      - name: Storage permission for saving the book (Android 10 and older)
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ] && ! grep -q "WRITE_EXTERNAL_STORAGE" "$MANIFEST"; then
+            sed -i 's|<application|<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />\n    <application android:requestLegacyExternalStorage="true"|' "$MANIFEST"
+            echo "✓ Added storage permission"
+          fi
+          grep -n "uses-permission\|<application" "$MANIFEST"
+
       - name: Green system bars background (edge-to-edge)
         run: |
           RES="android/app/src/main/res/values"

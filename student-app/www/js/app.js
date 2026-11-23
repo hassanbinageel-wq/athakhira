@@ -482,9 +482,9 @@ const App = (function() {
 
           <div class="settings-section">
             <h3>📚 كتاب الذخيرة المشرفة</h3>
-            <p class="settings-hint">النسخة الكاملة من الكتاب متوفّرة للتحميل والقراءة</p>
+            <p class="settings-hint">النسخة الكاملة من الكتاب موجودة داخل التطبيق، وتُحفظ على جهازك في مجلد «المستندات» بضغطة واحدة</p>
             <button class="btn primary block" onclick="App.downloadBook()">
-              📥 فتح/تحميل الكتاب PDF
+              📥 تحميل الكتاب على جهازك
             </button>
           </div>
 
@@ -2147,16 +2147,45 @@ const App = (function() {
   }
 
   // ═══════════════════ تحميل PDF (يفتح Google Drive في المتصفح) ═══════════════════
-  function downloadBook() {
-    const url = CONFIG.BOOK_PDF_URL;
+  // الكتاب داخل التطبيق (assets/book/book.pdf) — لا رابط خارجي ولا دومين.
+  // على الجوال: يُحفظ تلقائياً في مجلد «المستندات Documents» عبر إضافة Filesystem.
+  let bookSaving = false;
+  async function downloadBook() {
+    const FS = window.Capacitor?.Plugins?.Filesystem;
+    const fileName = CONFIG.BOOK_FILE_NAME || 'الذخيرة المشرفة.pdf';
+    if (!window.Capacitor?.isNativePlatform?.() || !FS) {
+      window.open(CONFIG.BOOK_PDF_PATH, '_blank');   // المعاينة في المتصفح
+      return;
+    }
+    if (bookSaving) return;
+    bookSaving = true;
     try {
-      // في Capacitor: يفتح في المتصفح الخارجي تلقائياً
-      window.open(url, '_blank');
-      Gamification.showToast('📚 يفتح رابط الكتاب...', 'info', 2000);
+      Gamification.showToast('📥 جارٍ حفظ الكتاب على جهازك...', 'info', 2500);
+      const res = await fetch(CONFIG.BOOK_PDF_PATH);
+      if (!res.ok) throw new Error('book missing');
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      // نكتب على دفعات حتى لا نمرّر نصّاً ضخماً دفعة واحدة
+      const CHUNK = 768 * 1024;   // مضاعف 3 حتى يبقى كل جزء base64 سليماً
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        const part = bytes.subarray(i, i + CHUNK);
+        let bin = '';
+        for (let j = 0; j < part.length; j += 0x8000) {
+          bin += String.fromCharCode.apply(null, part.subarray(j, j + 0x8000));
+        }
+        const data = btoa(bin);
+        const opts = { path: fileName, data, directory: 'DOCUMENTS' };
+        if (i === 0) await FS.writeFile({ ...opts, recursive: true });
+        else await FS.appendFile(opts);
+      }
+      Character.sayCustom('📚 تم حفظ الكتاب على جهازك! تجده في مجلد «المستندات» باسم: ' + fileName);
     } catch (e) {
-      Gamification.showToast('تعذّر فتح الرابط', 'warning');
+      console.error('downloadBook', e);
+      Gamification.showToast('تعذّر حفظ الكتاب. تأكد من وجود مساحة كافية في الجهاز.', 'warning', 4000);
+    } finally {
+      bookSaving = false;
     }
   }
+
 
   function showLevelDetails() {
     const level = Gamification.getCurrentLevel();
