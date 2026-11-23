@@ -1131,9 +1131,16 @@ const App = (function() {
       window._matchPairs = {};
       window._matchSelectedKey = null;
     } else if (q.type === 'order') {
-      // items دائماً بالترتيب الصحيح — نُخلطها فقط للعرض
-      const shuffled = q.items.map((it, i) => ({ text: it, originalIdx: i }))
-        .sort(() => Math.random() - 0.5);
+      // items دائماً بالترتيب الصحيح — نُخلطها للعرض (Fisher–Yates)،
+      // ونعيد الخلط إن وقع على الترتيب الصحيح حتى لا تظهر الإجابة جاهزة
+      const shuffled = q.items.map((it, i) => ({ text: it, originalIdx: i }));
+      for (let tries = 0; tries < 20; tries++) {
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        if (shuffled.length < 2 || shuffled.some((it, i) => it.originalIdx !== i)) break;
+      }
       questionHTML = `
         <div class="order-list" id="order-list">
           ${shuffled.map(it => `
