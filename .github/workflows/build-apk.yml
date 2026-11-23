@@ -48,6 +48,17 @@ jobs:
             grep "uses-permission" "$MANIFEST"
           fi
 
+      - name: Green system bars background (edge-to-edge)
+        run: |
+          RES="android/app/src/main/res/values"
+          STYLES="$RES/styles.xml"
+          if [ -f "$STYLES" ] && ! grep -q "athakhira_bars" "$STYLES"; then
+            printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="athakhira_bars">#0d3b2e</color>\n</resources>\n' > "$RES/athakhira_colors.xml"
+            sed -i 's|<item name="android:background">@null</item>|<item name="android:background">@null</item>\n        <item name="android:windowBackground">@color/athakhira_bars</item>\n        <item name="android:windowLightStatusBar">false</item>|' "$STYLES"
+            echo "✓ System bars background set"
+          fi
+          cat "$STYLES"
+
       - name: Generate app icons
         run: npx @capacitor/assets generate --android || echo "icon generation skipped"
 

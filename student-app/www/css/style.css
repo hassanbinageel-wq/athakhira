@@ -2659,7 +2659,7 @@ img { display: block; max-width: 100%; }
 .home-header.hc-header { padding: 8px 12px; margin-bottom: 8px; }
 .hc-header .hh-avatar { width: 42px; height: 42px; }
 .hc-header .hh-name { font-size: 16px; }
-.hc-header .hh-btn { width: 40px; height: 40px; font-size: 18px; }
+.hc-header .hh-btn { width: 44px; height: 44px; font-size: 19px; }
 .hc-stats {
   background: var(--paper, #fff);
   border-radius: 16px;
@@ -2690,3 +2690,74 @@ img { display: block; max-width: 100%; }
 
 /* الخريطة تأخذ ما تبقّى من ارتفاع الشاشة وتصغر بنسبتها لتظهر كاملة */
 .mountain-scene.mountain-scene-img { margin-inline: auto; }
+
+/* ═══════════ مشغّل فيديو الدرس + التكبير الخاصّ ═══════════ */
+.video-tools { display: flex; gap: 8px; margin-top: 10px; direction: ltr; } /* نفس اتجاه شريط الوقت: الرجوع يساراً والتقديم يميناً */
+.vt-btn {
+  flex: 1; min-height: 48px;
+  border: 2px solid var(--emerald-500); border-radius: 14px;
+  background: #fff; color: var(--emerald-900);
+  font-family: var(--font-display); font-size: 16px; font-weight: 800;
+  cursor: pointer;
+}
+.vt-btn:active { transform: scale(.96); }
+.vt-full { background: linear-gradient(135deg, #2ba676, #0d3b2e); color: #fff; border-color: transparent; }
+/* التكبير: يملأ مساحة التطبيق (التي لا تغطيها أشرطة النظام)، وأزرار التحكّم مرفوعة عن الحافة */
+.video-wrap.video-full {
+  position: fixed; inset: 0; z-index: 3000;
+  background: #000;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 12px 12px calc(24px + env(safe-area-inset-bottom));
+}
+.video-wrap.video-full .lesson-video {
+  flex: 1; width: 100%; height: auto; max-height: none;
+  min-height: 0; object-fit: contain; border-radius: 0;
+}
+.video-wrap.video-full .video-tools { margin-top: 14px; }
+.video-wrap.video-full .vt-btn { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
+body.no-scroll { overflow: hidden; }
+
+/* ═══════════════════════════════════════════════════════
+   قابليّة القراءة للأطفال (8–12): نصوص أكبر، تباين أعلى، أزرار ≥ 44px
+   ═══════════════════════════════════════════════════════ */
+/* محتوى الدرس */
+.section-title { font-size: 17px; }
+.section-body p { font-size: 17px; }
+.hw-word, .hw-meaning { font-size: 16px; }
+.learned-list li { font-size: 16px; }
+.chapter-desc { font-size: 16px; }
+.think-q { font-size: 17px; }
+.think-hint, .quiz-hint { font-size: 15px; }
+/* بطاقات الدروس والوسوم */
+.lesson-title { font-size: 17px; }
+.badge { font-size: 13px; padding: 4px 10px; }
+.lesson-score-line { font-size: 15px; }
+/* رؤوس الشاشات */
+.chapter-header-num, .lesson-header-crumb { font-size: 14px; }
+/* الاختبار */
+.quiz-topic, .quiz-progress span { font-size: 14px; }
+.match-status { font-size: 15px; }
+.reward-hint { font-size: 15px; }
+.subtotals-hint { font-size: 15px; }
+/* الشاشة الرئيسية */
+.hc-chip { font-size: 14px; }
+.hc-level { font-size: 13px; }
+.home-view .motiv-text { font-size: 14.5px; }
+/* الإعدادات والتسجيلات والنوافذ */
+.form-group label { font-size: 15px; }
+.onboarding-import p, .settings-hint { font-size: 14px; }
+.settings-item-sub, .recording-lesson, .recording-lesson-tag { font-size: 14px; }
+.recording-q-label, .rec-total-lbl, .rec-group-count { font-size: 13px; }
+.backup-modal-text, .backup-modal-hint { font-size: 14px; }
+.mic-perm-text em { font-size: 15px; }
+.settings-footer { font-size: 13px; }
+
+/* تباين رؤوس الفصل والدرس: طبقة زمرّديّة داكنة فوق لون الفصل (يبقى اللون ظاهراً) */
+.chapter-header, .lesson-header {
+  box-shadow: inset 0 0 0 999px rgba(13,59,46,.5), var(--shadow);
+}
+.chapter-header *, .lesson-header * { text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.chapter-header .back-btn, .lesson-header .back-btn { text-shadow: none; }
+
+/* أهداف لمس مريحة */
+.back-btn, .hh-btn { min-width: 44px; min-height: 44px; }

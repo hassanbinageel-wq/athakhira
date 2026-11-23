@@ -6,6 +6,8 @@
     "androidScheme": "https"
   },
   "android": {
-    "allowMixedContent": true
+    "allowMixedContent": true,
+    "adjustMarginsForEdgeToEdge": "auto",
+    "backgroundColor": "#0d3b2e"
   }
 }

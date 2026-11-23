@@ -38,6 +38,9 @@ const App = (function() {
   }
 
   function handleBackButton() {
+    // زر الرجوع يغلق أوّلاً أي شيء مفتوح فوق الشاشة
+    if (document.querySelector('.video-wrap.video-full')) { toggleVideoFull(false); return; }
+    if (clearOverlays()) return;
     switch (currentViewName) {
       case 'onboarding':
         // في أول شاشة، لا خروج تلقائي — يبقى في التطبيق
@@ -79,7 +82,15 @@ const App = (function() {
     Gamification.load(Profile.id);
     SmartReview.load(Profile.id);
     VoiceRecorder.setUser(Profile.id);
-    setTimeout(() => Character.greet(), 800);
+    // الترحيب مرّة واحدة في اليوم فقط (لا يقطع الطفل في كل فتح للتطبيق)
+    try {
+      const today = new Date().toDateString();
+      const key = `lastGreet_${Profile.id}`;
+      if (localStorage.getItem(key) !== today) {
+        localStorage.setItem(key, today);
+        setTimeout(() => Character.greet(), 800);
+      }
+    } catch (e) { setTimeout(() => Character.greet(), 800); }
     showJourneyMap();
   }
 
@@ -179,6 +190,7 @@ const App = (function() {
 
   // ═══════════════════ خريطة الجبل ═══════════════════
   function showJourneyMap() {
+    clearOverlays();
     currentViewName = 'home';
     const level = Gamification.getCurrentLevel();
     const nextLevel = Gamification.getNextLevel();
@@ -411,6 +423,18 @@ const App = (function() {
   }
   window.addEventListener('resize', () => { if (currentViewName === 'home') fitMapToScreen(); });
 
+  // يزيل النوافذ العائمة (صندوق المكافأة، الترقّي، فتح فصل، رسالة الشخصية)
+  // حتى لا تبقى فوق شاشة أخرى بعد الانتقال. يرجع true إن أغلق شيئاً.
+  function clearOverlays() {
+    let closed = false;
+    document.querySelectorAll('.reward-overlay, .levelup-overlay, .unlock-overlay, .unlock-banner-overlay')
+      .forEach(el => { el.remove(); closed = true; });
+    const ch = document.getElementById('character-container');
+    if (ch && ch.classList.contains('active')) { Character.forceHide(); closed = true; }
+    document.body.classList.remove('no-scroll');
+    return closed;
+  }
+
   // ═══════════════════ إشعار فتح الفصل الجديد ═══════════════════
   function showUnlockBanner(info) {
     // إزالة أي بانر سابق
@@ -494,6 +518,7 @@ const App = (function() {
 
   // ═══════════════════ الإعدادات وأولياء الأمور ═══════════════════
   function showSettings() {
+    clearOverlays();
     currentViewName = 'settings';
     const recordings = VoiceRecorder.listAllRecordings();
 
@@ -613,6 +638,7 @@ const App = (function() {
 
   // ═══════════════════ فتح فصل ═══════════════════
   function openChapter(chapterId) {
+    clearOverlays();
     const ch = CHAPTERS.find(c => c.id === chapterId);
     if (!ch || !Gamification.isChapterUnlocked(chapterId)) return;
     currentChapter = ch;
@@ -752,20 +778,47 @@ const App = (function() {
 
   // فيديو نهاية الدرس: assets/video/<الفصل>-<الدرس>.mp4
   // إن لم يوجد الملف يُحذف القسم تلقائياً (فلا يلزم تسجيل الفيديوهات في أي قائمة)
+  // التكبير خاصّ بنا (ليس ملء الشاشة الأصلي) حتى يبقى شريط التحكّم فوق أزرار أندرويد
   function renderLessonVideo(chapterId, lessonId) {
     return `
       <div class="lesson-section section-video">
         <div class="section-title">🎬 شاهد الدرس</div>
         <div class="section-body">
-          <video class="lesson-video" controls playsinline preload="metadata"
-                 controlsList="nodownload"
-                 src="assets/video/${chapterId}-${lessonId}.mp4"
-                 onerror="this.closest('.section-video')?.remove()"></video>
+          <div class="video-wrap" id="video-wrap">
+            <video class="lesson-video" id="lesson-video" controls playsinline preload="metadata"
+                   controlsList="nodownload nofullscreen" disablePictureInPicture
+                   src="assets/video/${chapterId}-${lessonId}.mp4"
+                   onerror="this.closest('.section-video')?.remove()"></video>
+            <div class="video-tools">
+              <button type="button" class="vt-btn" onclick="App.videoSkip(-10)" aria-label="رجوع 10 ثوانٍ">⏪ 10</button>
+              <button type="button" class="vt-btn vt-full" onclick="App.toggleVideoFull()" id="vt-full">⛶ تكبير</button>
+              <button type="button" class="vt-btn" onclick="App.videoSkip(10)" aria-label="تقديم 10 ثوانٍ">10 ⏩</button>
+            </div>
+          </div>
         </div>
       </div>`;
   }
 
+  function videoSkip(sec) {
+    const v = document.getElementById('lesson-video');
+    if (!v) return;
+    const d = isFinite(v.duration) ? v.duration : Infinity;
+    v.currentTime = Math.max(0, Math.min(d, v.currentTime + sec));
+  }
+
+  function toggleVideoFull(force) {
+    const wrap = document.getElementById('video-wrap');
+    if (!wrap) return false;
+    const on = typeof force === 'boolean' ? force : !wrap.classList.contains('video-full');
+    wrap.classList.toggle('video-full', on);
+    document.body.classList.toggle('no-scroll', on);
+    const btn = document.getElementById('vt-full');
+    if (btn) btn.textContent = on ? '✕ تصغير' : '⛶ تكبير';
+    return true;
+  }
+
   function openLesson(chapterId, lessonId) {
+    clearOverlays();
     const ch = CHAPTERS.find(c => c.id === chapterId);
     const lesson = ch?.lessons.find(l => l.id === lessonId);
     if (!lesson || !Gamification.isLessonUnlocked(chapterId, lessonId)) return;
@@ -835,8 +888,8 @@ const App = (function() {
             </button>
             <button class="btn secondary block" onclick="App.finishLesson()"
                     id="finish-btn" ${lessonQuizTaken ? '' : 'disabled'}
-                    title="${lessonQuizTaken ? '' : 'أكمل الاختبار بعلامة كاملة أولاً'}">
-              ${lessonQuizTaken ? '✓ أنهيت الدرس' : '🔒 أكمل الاختبار كاملاً لإنهاء الدرس'}
+                    title="${lessonQuizTaken ? '' : 'اجتز الاختبار (50٪ فأكثر) أولاً'}">
+              ${lessonQuizTaken ? '✓ أنهيت الدرس' : '🔒 اجتز الاختبار لإنهاء الدرس'}
             </button>
           </div>
         </div>
@@ -1006,6 +1059,7 @@ const App = (function() {
 
   // ═══════════════════ الاختبار ═══════════════════
   function startQuiz() {
+    clearOverlays();
     const gradedQuestions = (currentLesson.quiz || []).filter(q => q.type !== 'think');
     if (gradedQuestions.length === 0) return;
     currentQuizIdx = 0;
@@ -1311,6 +1365,7 @@ const App = (function() {
   }
 
   function showCertificate() {
+    clearOverlays();
     const raw = localStorage.getItem(`certificate_${Profile.id}`);
     if (!raw) {
       Character.sayCustom('🔒 الشهادة تُفتح بعد اجتياز الاختبار النهائي بعلامة كاملة', 4500);
@@ -1650,6 +1705,7 @@ const App = (function() {
 
   // ═══════════════════ شاشة التسجيلات الصوتيّة (مستقلّة) ═══════════════════
   function showRecordings() {
+    clearOverlays();
     currentViewName = 'recordings';
     const recordings = VoiceRecorder.listAllRecordings();
 
@@ -2197,7 +2253,7 @@ const App = (function() {
     init,
     completeOnboarding, handleImport,
     goHome, showJourneyMap, openChapter, openLesson,
-    showLockedMsg, showFinalLockedMsg, toggleRecord, playRecording,
+    showLockedMsg, showFinalLockedMsg, videoSkip, toggleVideoFull, toggleRecord, playRecording,
     startQuiz, answerQuiz, answerOrder,
     answerFillChoice, selectMatchKey, selectMatchVal, answerMatch,
     retakeQuiz, finishLesson,
