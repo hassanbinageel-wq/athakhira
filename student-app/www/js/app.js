@@ -274,68 +274,6 @@ const App = (function() {
         <img class="mt-walker-img" src="${Character.imgPath}" alt="مكانك في الرحلة"/>
       </div>`;
 
-    // ═══ العبارة التحفيزيّة (تتغيّر مع كل فصل) ═══
-    function buildMotivation() {
-      const curCh = CHAPTERS.find(c => c.id === currentChapterId);
-      const nextCh = CHAPTERS.find(c => c.id === currentChapterId + 1);
-      // الفصل التالي يُفتح باجتياز كل دروس الفصل الحالي (لا بالنجوم)
-      const passedInCur = Gamification.state.completedLessons
-        .filter(l => l.chapterId === currentChapterId).length;
-      const left = Math.max(0, (curCh?.lessons.length || 0) - passedInCur);
-      const needTxt = left === 1 ? 'درس واحد' : left === 2 ? 'درسان' : `${left} دروس`;
-
-      if (allDone) {
-        return {
-          emoji: '🏆',
-          text: 'أكملت كل الفصول! الكأس ينتظرك في القمّة — ابدأ الاختبار النهائي واحصل على شهادتك.'
-        };
-      }
-
-      // رسائل مخصّصة لكل فصل
-      const perChapter = {
-        1: [
-          `بدأت الرحلة من البوّابة! تعلّم أركان الدين ثم اصعد نحو ${nextCh?.shortTitle || 'الفصل التالي'} 🌟`,
-          `أنت في الأساس المتين. باقي ${needTxt} وتفتح "${nextCh?.shortTitle || ''}" 💧`
-        ],
-        2: [
-          `الطهارة نصف الإيمان! باقي ${needTxt} لتصل إلى "${nextCh?.shortTitle || ''}" 🕌`,
-          `أحسنت! كل وضوء تتعلّمه يقرّبك من قمّة الجبل ✨`
-        ],
-        3: [
-          `الصلاة عمود الدين — باقي ${needTxt} وتفتح "${nextCh?.shortTitle || ''}" 🤲`,
-          `أنت في منتصف الطريق تقريباً! واصل الصعود 💪`
-        ],
-        4: [
-          `أدعية جميلة تحفظها! باقي ${needTxt} لـ"${nextCh?.shortTitle || ''}" 🌤️`,
-          `كل دعاء تحفظه كنزٌ لك. استمرّ! 🗝️`
-        ],
-        5: [
-          `صرت تعرف دعاء كل حال! باقي ${needTxt} لـ"${nextCh?.shortTitle || ''}" 📜`,
-          `تجاوزت نصف الجبل — القمّة أقرب مما تظنّ 🏔️`
-        ],
-        6: [
-          `تتعرّف على نبيّك ﷺ — باقي ${needTxt} لـ"${nextCh?.shortTitle || ''}" 🕌`,
-          `معرفة النبي ﷺ شرف عظيم. واصل يا بطل! 💚`
-        ],
-        7: [
-          `باقي فصل واحد فقط! ${needTxt} وتفتح "${nextCh?.shortTitle || ''}" 🌅`,
-          `أنت قريب جداً من القمّة — لا تتوقّف الآن! ⛰️`
-        ],
-        8: [
-          `الفصل الأخير! أكمله ليفتح لك الكأس والشهادة 🏆`,
-          `خطوة أخيرة وتصل للقمّة — أنت رائع! ⭐`
-        ]
-      };
-
-      const msgs = perChapter[currentChapterId] || [`واصل التعلّم، أنت تبلي بلاءً حسناً! 🌟`];
-      // نختار الرسالة حسب التقدّم داخل الفصل
-      const doneInCh = Gamification.state.completedLessons
-        .filter(l => l.chapterId === currentChapterId).length;
-      const pick = doneInCh === 0 ? 0 : (msgs.length > 1 ? 1 : 0);
-
-      return { emoji: curCh?.icon || '🌟', text: msgs[pick] };
-    }
-    const motivation = buildMotivation();
 
     // الكأس مرسوم في الصورة؛ هنا منطقة الضغط فقط
     const trophyHTML = `
@@ -378,12 +316,7 @@ const App = (function() {
 
         ${reviewBadge}
 
-        <h2 class="road-heading hc-heading">🏔️ رحلة التعلّم</h2>
 
-        <div class="motivation-banner">
-          <span class="motiv-emoji">${motivation.emoji}</span>
-          <span class="motiv-text">${motivation.text}</span>
-        </div>
 
         <div class="mountain-scene mountain-scene-img">
           <img class="mountain-img" src="assets/map/mountain.webp" alt="خريطة رحلة التعلّم" draggable="false"/>
@@ -415,7 +348,9 @@ const App = (function() {
     const scene = document.querySelector('.mountain-scene-img');
     if (!scene) return;
     scene.style.width = '';
-    const fullW = scene.parentElement.clientWidth;
+    const parent = scene.parentElement;
+    const cs = getComputedStyle(parent);
+    const fullW = parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const top = scene.getBoundingClientRect().top + window.scrollY;
     const avail = window.innerHeight - top - 12;
     const w = Math.max(240, Math.min(fullW, Math.floor(avail * 1228 / 2000)));
